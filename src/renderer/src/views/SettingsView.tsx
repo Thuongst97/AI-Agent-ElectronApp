@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useSettingsStore } from '../store/settingsStore'
 import type { AppSettings } from '@shared/ipc-types'
-import { TOKEN_MASKED } from '@shared/ipc-types'
 import { MODEL_GROUPS, ALL_KNOWN_VALUES, CUSTOM_SENTINEL, REASONING_MODELS } from '../constants/models'
 
 export default function SettingsView({ onClose }: { onClose: () => void }): JSX.Element {
   const { settings, loadSettings, saveSettings } = useSettingsStore()
   const [form, setForm] = useState<AppSettings>(settings)
   const [saved, setSaved] = useState(false)
-  const [tokenError, setTokenError] = useState('')
   const [saveError, setSaveError] = useState('')
 
   // Track whether the current model value is a custom (not in the known list)
@@ -26,7 +24,6 @@ export default function SettingsView({ onClose }: { onClose: () => void }): JSX.
   }, [])
 
   const handleSave = async (): Promise<void> => {
-    if (tokenError) return
     setSaveError('')
     try {
       await saveSettings(form)
@@ -64,51 +61,6 @@ export default function SettingsView({ onClose }: { onClose: () => void }): JSX.
         <section>
           <h3 className="text-xs uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>GitHub Copilot</h3>
           <div className="flex flex-col gap-3">
-
-            {/* ── GitHub Token ── */}
-            <div className="flex flex-col gap-1 text-sm">
-              <span style={{ color: 'var(--text-muted)' }}>Token <span className="text-xs font-normal">(optional)</span></span>
-              <div className="flex gap-2">
-                <input
-                  type="password"
-                  className={`input-bar text-sm py-2 flex-1 ${tokenError ? 'border-red-500' : ''}`}
-                  value={form.githubToken === TOKEN_MASKED ? '' : (form.githubToken ?? '')}
-                  placeholder={
-                    form.githubToken === TOKEN_MASKED
-                      ? 'Token saved — clear and retype to change'
-                      : 'Leave empty to use gh CLI credentials'
-                  }
-                  onChange={e => {
-                    const val = e.target.value
-                    setForm(f => ({ ...f, githubToken: val }))
-                    if (val.startsWith('ghp_')) {
-                      setTokenError('PATs (ghp_…) are not supported. Use an OAuth token from `gh auth token` (ghu_…) or leave empty.')
-                    } else {
-                      setTokenError('')
-                    }
-                  }}
-                />
-                {form.githubToken === TOKEN_MASKED && (
-                  <button
-                    type="button"
-                    className="btn-ghost text-xs px-3 whitespace-nowrap"
-                    style={{ color: 'var(--text-muted)' }}
-                    onClick={() => { setForm(f => ({ ...f, githubToken: '' })); setTokenError('') }}
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-              {tokenError
-                ? <span className="text-xs" style={{ color: '#f87171' }}>⚠️ {tokenError}</span>
-                : form.githubToken === TOKEN_MASKED
-                  ? <span className="text-xs" style={{ color: 'var(--text-muted)' }}>🔒 Stored encrypted on this device</span>
-                  : <span className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-                      <strong>Option A (recommended):</strong> Leave empty — uses <code className="px-1 rounded" style={{background:'var(--bg-hover)'}}>gh auth login</code> credentials automatically.<br/>
-                      <strong>Option B:</strong> OAuth token from <code className="px-1 rounded" style={{background:'var(--bg-hover)'}}>gh auth token</code> (starts with <code className="px-1 rounded" style={{background:'var(--bg-hover)'}}>ghu_</code>).
-                    </span>
-              }
-            </div>
 
             {/* ── Model selector ── */}
             <label className="flex flex-col gap-1 text-sm">
@@ -202,7 +154,7 @@ export default function SettingsView({ onClose }: { onClose: () => void }): JSX.
       <div className="px-5 py-3 border-t flex justify-end gap-2" style={{ borderColor: 'var(--border)' }}>
         {saved && <span className="text-xs self-center" style={{ color: 'var(--success)' }}>✓ Saved!</span>}
         {saveError && <span className="text-xs self-center text-right" style={{ color: '#f87171', maxWidth: '60%' }}>⚠️ {saveError}</span>}
-        <button className="btn-primary" onClick={handleSave} disabled={!!tokenError} style={tokenError ? { opacity: 0.4, cursor: 'not-allowed' } : {}}>Save</button>
+        <button className="btn-primary" onClick={handleSave}>Save</button>
       </div>
     </div>
   )

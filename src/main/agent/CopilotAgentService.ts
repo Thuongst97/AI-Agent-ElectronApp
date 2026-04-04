@@ -22,11 +22,23 @@
 
 import { approveAll } from '@github/copilot-sdk'
 import type { CopilotSession } from '@github/copilot-sdk'
+import { app } from 'electron'
+import { join } from 'path'
 import log from 'electron-log'
 import type { ChatChunk, ChatRequest, AppSettings } from '../../shared/ipc-types'
 import type { CopilotClientService } from './CopilotClientService'
 import type { ToolRegistry } from '../tools/ToolRegistry'
 import { BASE_SYSTEM_PROMPT, SEMANTIC_GATE_ADDENDUM } from './prompts'
+
+// Built-in CLI shell/file tools that must be excluded to prevent the agent from
+// entering infinite execution loops when it tries to run shell commands.
+const EXCLUDED_BUILTIN_TOOLS = [
+  'powershell', 'bash', 'sh', 'cmd',
+  'run_command', 'execute_command', 'shell',
+  'report_intent',
+  'read_file', 'write_file', 'create_file', 'edit_file',
+  'search_files', 'list_directory', 'find_files',
+]
 
 export class CopilotAgentService {
   private settings: AppSettings
@@ -164,6 +176,8 @@ export class CopilotAgentService {
       const session = await client.resumeSession(conversationId, {
         onPermissionRequest: approveAll,
         tools,
+        excludedTools: EXCLUDED_BUILTIN_TOOLS,
+        configDir: join(app.getPath('userData'), 'sdk-sessions'),
       } as any)
       log.info('[CopilotAgentService] Resumed session %s', conversationId)
       return session
@@ -176,11 +190,15 @@ export class CopilotAgentService {
 
   private _buildSessionConfig(sessionId: string) {
     const tools   = this.toolRegistry?.getAll() ?? []
+    // Exclude built-in CLI shell tools — this agent works with the requirements
+    // database only; unrestricted shell access causes infinite execution loops.
     const config: Record<string, unknown> = {
       sessionId,
+      configDir:     join(app.getPath('userData'), 'sdk-sessions'),
       model:         this.settings.copilotModel || 'gpt-4o',
       streaming:     true,
       tools,
+      excludedTools: EXCLUDED_BUILTIN_TOOLS,
       systemMessage: {
         content: BASE_SYSTEM_PROMPT + SEMANTIC_GATE_ADDENDUM,
       },

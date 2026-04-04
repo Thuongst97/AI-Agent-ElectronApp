@@ -13,12 +13,8 @@ extraResources:
   - from: data/requirements
     to: requirements
   # Bundle the Copilot CLI binary for packaged builds.
-  # In development the globally installed @github/copilot CLI (in PATH) is used.
-  # Uncomment and adjust the path once the CLI binary is obtained for each target platform:
-  #
-  # - from: bin/copilot-win.exe
-  #   to: copilot-cli/copilot.exe
-  #   filter: ["**/*"]
+  - from: node_modules/@github/copilot-win32-x64/copilot.exe
+    to: copilot-cli/copilot.exe
 
 win:
   target:

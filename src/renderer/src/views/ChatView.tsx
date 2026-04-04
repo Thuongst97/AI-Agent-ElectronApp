@@ -7,6 +7,14 @@ import ReactMarkdown from 'react-markdown'
 import rehypeHighlight from 'rehype-highlight'
 import type { Message } from '@shared/ipc-types'
 
+const QUICK_PROMPTS: Record<string, string> = {
+  'Analyze ticket':     'Please help me analyze a ticket. Describe what information a well-written ticket should contain and what questions to ask when reviewing it.',
+  'Summary ticket':     'Please help me write a concise summary for a ticket. Explain what fields and information should be included in a good ticket summary.',
+  'Review commit':      'I will provide commit link, please review it',
+  'Make weekly report': 'Please help me structure a weekly engineering report. What sections should it include and what key information should be highlighted?',
+  'Generate test case': 'Please help me generate test cases. Describe the structure of a good test case including preconditions, steps, expected results, and coverage criteria.',
+}
+
 export default function ChatView(): JSX.Element {
   const { messages, isThinking, streamingContent } = useChatStore()
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -38,15 +46,17 @@ export default function ChatView(): JSX.Element {
               Your AI agent for requirements analysis, test generation and more.
               Ask me anything!
             </p>
-            <div className="grid grid-cols-2 gap-2 mt-2">
-              {[
-                'Show all power requirements',
-                'How many requirements are there?',
-                'Explain Core_01140',
-                'Generate tests for APP_01010',
-              ].map(prompt => (
-                <QuickPrompt key={prompt} text={prompt} />
-              ))}
+            <div className="flex flex-col items-center gap-2 mt-2">
+              <div className="flex gap-2">
+                {['Analyze ticket', 'Summary ticket', 'Review commit'].map(p => (
+                  <QuickPrompt key={p} text={p} prompt={QUICK_PROMPTS[p]} />
+                ))}
+              </div>
+              <div className="flex gap-2">
+                {['Make weekly report', 'Generate test case'].map(p => (
+                  <QuickPrompt key={p} text={p} prompt={QUICK_PROMPTS[p]} />
+                ))}
+              </div>
             </div>
           </div>
         )}
@@ -79,7 +89,7 @@ export default function ChatView(): JSX.Element {
   )
 }
 
-function QuickPrompt({ text }: { text: string }): JSX.Element {
+function QuickPrompt({ text, prompt }: { text: string; prompt: string }): JSX.Element {
   const { sendMessage } = useChatStore()
   return (
     <button
@@ -97,7 +107,7 @@ function QuickPrompt({ text }: { text: string }): JSX.Element {
         (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface)'
         ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border)'
       }}
-      onClick={() => sendMessage(text)}
+      onClick={() => sendMessage(prompt)}
     >
       {text}
     </button>

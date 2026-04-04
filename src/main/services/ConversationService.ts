@@ -18,14 +18,24 @@ export class ConversationService {
   listConversations(): ConversationMeta[] {
     try {
       return readdirSync(this.dir)
-        .filter(f => f.endsWith('.json'))
-        .map(f => {
-          const data = this._load(f.replace('.json', ''))
-          return {
-            id:           data.id,
-            title:        data.title,
-            createdAt:    data.createdAt,
-            messageCount: data.messages?.length ?? 0,
+        .filter(f => f.endsWith('.json') && !f.endsWith('.history.json'))
+        .flatMap(f => {
+          try {
+            const data = this._load(f.replace('.json', ''))
+            // Skip conversations with no messages (ghost sessions)
+            if (!data.messages?.length) return []
+            // Derive title from first user message if missing or whitespace-only
+            const title = data.title?.trim() ||
+              data.messages.find((m: Message) => m.role === 'user')?.content?.slice(0, 60) ||
+              'New conversation'
+            return [{
+              id:           data.id,
+              title,
+              createdAt:    data.createdAt,
+              messageCount: data.messages.length,
+            }]
+          } catch {
+            return [] // skip malformed / unreadable files
           }
         })
         .sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''))
@@ -56,6 +66,10 @@ export class ConversationService {
       }
     }
     data.messages.push(...messages)
+    // Refresh title from first user message in case it was empty initially
+    if (!data.title) {
+      data.title = data.messages.find((m: Message) => m.role === 'user')?.content?.slice(0, 60) ?? 'New conversation'
+    }
     this._save(id, data)
   }
 

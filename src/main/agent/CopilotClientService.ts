@@ -69,9 +69,10 @@ export class CopilotClientService {
 
   private _buildClient(settings: AppSettings): CopilotClient {
     // In packaged builds, the CLI binary is placed under resources/copilot-cli/.
-    // In development, rely on the global `@github/copilot` install (in PATH).
+    // In development, the SDK locates the CLI from node_modules automatically.
+    const cliBinary = process.platform === 'win32' ? 'copilot.exe' : 'copilot'
     const cliPath = app.isPackaged
-      ? join(process.resourcesPath, 'copilot-cli', 'copilot')
+      ? join(process.resourcesPath, 'copilot-cli', cliBinary)
       : undefined
 
     return new CopilotClient({

@@ -42,6 +42,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
       isLoading:            false,
       isThinking:           false,
     })
+    // Refresh sidebar so the just-finished conversation appears immediately
+    window.electronAPI.listHistory().then(conversations => set({ conversations })).catch(() => {})
     return id
   },
 
@@ -103,6 +105,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
           streamingContent: '',
         }
       })
+      // Refresh sidebar so this conversation's title appears without needing to click New Chat
+      window.electronAPI.listHistory().then(conversations => set({ conversations })).catch(() => {})
     }
   },
 
