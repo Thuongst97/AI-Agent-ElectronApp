@@ -33,8 +33,18 @@ mac:
   target:
     - target: dmg
       arch: [x64, arm64]
-  icon: resources/icon.icns
+    - target: zip
+      arch: [x64, arm64]
+  icon: resources/icon.png
   category: public.app-category.productivity
+  darkModeSupport: true
+
+dmg:
+  title: AI Agent
+  background: null
+  window:
+    width: 540
+    height: 380
 
 linux:
   target: AppImage
