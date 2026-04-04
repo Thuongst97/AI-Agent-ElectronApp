@@ -1,0 +1,166 @@
+@startuml AI-Agent Architecture
+!theme plain
+skinparam backgroundColor #FAFAFA
+skinparam defaultFontName Segoe UI
+skinparam defaultFontSize 13
+skinparam ArrowColor #555555
+skinparam ArrowThickness 1.5
+
+skinparam package {
+  BackgroundColor #EEF2FF
+  BorderColor #6366F1
+  FontStyle bold
+}
+
+skinparam component {
+  BackgroundColor #FFFFFF
+  BorderColor #94A3B8
+  FontColor #1E293B
+}
+
+skinparam database {
+  BackgroundColor #FEF9C3
+  BorderColor #CA8A04
+}
+
+skinparam cloud {
+  BackgroundColor #DBEAFE
+  BorderColor #3B82F6
+}
+
+skinparam rectangle {
+  BackgroundColor #F0FDF4
+  BorderColor #22C55E
+}
+
+' ─────────────────────────────────────────
+' ELECTRON SHELL
+' ─────────────────────────────────────────
+package "Electron Shell" {
+
+  ' ─────────────────────────────────────────
+  ' RENDERER PROCESS
+  ' ─────────────────────────────────────────
+  package "Renderer Process  (React 18 + Tailwind + Zustand)" {
+
+    package "Views" {
+      component "ChatView" as ChatView
+      component "HistoryView" as HistoryView
+      component "SettingsView" as SettingsView
+    }
+
+    package "Components" {
+      component "TitleBar" as TitleBar
+      component "InputBar\n(textarea + model picker + send)" as InputBar
+    }
+
+    package "Zustand Stores" {
+      component "chatStore\nmessages[], isLoading,\nconversationId\nsendMessage(), resetChat()" as ChatStore
+      component "settingsStore\nsettings: AppSettings\nloadSettings(), saveSettings()" as SettingsStore
+    }
+
+    package "Constants" {
+      component "models.ts\nMODEL_GROUPS, modelLabel()\nALL_KNOWN_VALUES" as Models
+    }
+
+    ChatView --> ChatStore
+    InputBar --> ChatStore
+    HistoryView --> ChatStore
+    SettingsView --> SettingsStore
+    InputBar --> Models
+  }
+
+  ' ─────────────────────────────────────────
+  ' PRELOAD BRIDGE
+  ' ─────────────────────────────────────────
+  rectangle "preload/index.ts\n(contextBridge)" as Preload {
+    component "window.electronAPI\n(ElectronAPI)" as ElectronAPI
+    component "window.windowControls\n(minimize / maximize / close)" as WindowControls
+  }
+
+  ' ─────────────────────────────────────────
+  ' MAIN PROCESS
+  ' ─────────────────────────────────────────
+  package "Main Process  (Node.js + LangChain)" {
+
+    component "index.ts\nBrowserWindow bootstrap\nsingle-instance lock\nwindow control handlers" as MainIndex
+
+    package "IPC Layer" {
+      component "ipc/handler.ts\nregisterIpcHandlers()\nservice singletons\nstartup sequence" as IpcHandler
+    }
+
+    package "Agent" {
+      component "AgentService\norchestration loop\nSemanticGate → Memory\n→ LLM → Tools → persist" as AgentService
+      component "LLMService\nChatOpenAI wrapper\nstreamChat(), probe()" as LLMService
+      component "MemoryService\nsliding-window buffer\nbuildMessageArray()" as MemoryService
+      component "SemanticGate\npre-flight intent\nvalidation" as SemanticGate
+      component "prompts.ts\nsystem prompt\ntemplates" as Prompts
+    }
+
+    package "Data" {
+      component "VectorMemoryService\nChromaDB (primary)\nVectra (fallback)\nsearch(), probe()" as VectorMemory
+      component "DataIngester\nCSV/JSON reader\nchunk + embed\nupsert to vector store" as DataIngester
+    }
+
+    package "Services" {
+      component "SettingsService\nAppSettings persistence\nsafeStorage token encrypt\nuserData/settings.json" as SettingsService
+      component "ConversationService\nfile-based chat history\nuserData/conversations/*.json" as ConvService
+    }
+
+    package "Tools" {
+      component "ToolRegistry\nregister / run(name,input)\ngetAll()" as ToolRegistry
+      component "requirementTools\nSearchRequirements\nGetRequirementDetails\nGenerateTests\nListAssignees" as ReqTools
+    }
+
+    IpcHandler --> AgentService
+    IpcHandler --> ConvService
+    IpcHandler --> SettingsService
+    IpcHandler --> VectorMemory
+    IpcHandler --> DataIngester
+
+    AgentService --> SemanticGate
+    AgentService --> MemoryService
+    AgentService --> LLMService
+    AgentService --> ToolRegistry
+    AgentService --> Prompts
+
+    ToolRegistry --> ReqTools
+    ReqTools --> VectorMemory
+    DataIngester --> VectorMemory
+
+    MainIndex --> IpcHandler
+  }
+}
+
+' ─────────────────────────────────────────
+' EXTERNAL SERVICES
+' ─────────────────────────────────────────
+cloud "GitHub Copilot\nChat API\n(OpenAI-compatible)" as CopilotAPI
+
+database "ChromaDB\n(vector store\nprimary)" as ChromaDB
+
+database "Vectra\n(local vector\nfallback)" as VectraDB
+
+rectangle "userData/\nsettings.json\n(encrypted token)" as SettingsFile
+
+rectangle "userData/conversations/\n*.json\n(chat history)" as ConvFiles
+
+rectangle "CSV / JSON\nRequirement Files\n(data seeds)" as CSVFiles
+
+' ─────────────────────────────────────────
+' CROSS-BOUNDARY CONNECTIONS
+' ─────────────────────────────────────────
+ChatStore --> ElectronAPI : invoke / on
+SettingsStore --> ElectronAPI : invoke
+
+ElectronAPI --> IpcHandler : ipcRenderer → ipcMain\n(contextBridge)
+WindowControls --> MainIndex : window control IPC
+
+LLMService --> CopilotAPI : HTTPS stream\n(LangChain)
+VectorMemory --> ChromaDB : HTTP REST
+VectorMemory ..> VectraDB : fallback
+SettingsService --> SettingsFile : read / write
+ConvService --> ConvFiles : read / write
+DataIngester <-- CSVFiles : file read
+
+@enduml
