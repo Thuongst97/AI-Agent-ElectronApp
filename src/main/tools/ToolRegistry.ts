@@ -1,77 +1,31 @@
 /**
- * ToolRegistry — aggregates all tools and implements IToolRegistry.
+ * ToolRegistry — aggregates all tools for injection into CopilotAgentService.
  *
  * Usage:
  *   const registry = new ToolRegistry(vectorMemory)
  *   agentService.setToolRegistry(registry)
  *
- * After setToolRegistry() is called, AgentService.chat() automatically
- * enters the tool-calling loop.
+ * Tools are GitHub Copilot SDK `Tool` objects created via `defineTool()`.
+ * The registry's `getAll()` output is passed to `client.createSession({ tools })`.
  */
 
-import type { StructuredTool }     from '@langchain/core/tools'
+import type { Tool }              from '@github/copilot-sdk'
 import type { VectorMemoryService } from '../data/VectorMemoryService'
-import type { IToolRegistry, RegisteredTool, ToolInput, ToolOutput } from '../agent/AgentService'
-
-import {
-  makeSearchRequirementsTool,
-  makeGetByIdTool,
-  makeGetByAssigneeTool,
-  makeGetRelatedTool,
-  makeAssigneeStatsTool,
-} from './requirementTools'
-
+import { makeRequirementTools }   from './requirementTools'
 import log from 'electron-log'
 
-// ── Adapter: DynamicStructuredTool → RegisteredTool ───────────────────────────
-// AgentService uses RegisteredTool (plain interface) for direct .run() calls
-// during the tool-execution step; it also uses LangChain StructuredTools when
-// binding the model via llm.bindTools().
-
-class LangChainToolAdapter implements RegisteredTool {
-  constructor(private readonly lc: StructuredTool) {}
-
-  get name()        { return this.lc.name }
-  get description() { return this.lc.description }
-
-  async run(input: ToolInput): Promise<ToolOutput> {
-    const result = await this.lc.invoke(input as Record<string, unknown>)
-    return { content: typeof result === 'string' ? result : JSON.stringify(result) }
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-
-export class ToolRegistry implements IToolRegistry {
-  private readonly tools: Map<string, LangChainToolAdapter> = new Map()
-  private readonly lcTools: StructuredTool[] = []
+export class ToolRegistry {
+  private readonly tools: Tool[]
 
   constructor(memory: VectorMemoryService) {
-    const lcToolInstances: StructuredTool[] = [
-      makeSearchRequirementsTool(memory),
-      makeGetByIdTool(memory),
-      makeGetByAssigneeTool(memory),
-      makeGetRelatedTool(memory),
-      makeAssigneeStatsTool(memory),
-    ]
-
-    for (const lc of lcToolInstances) {
-      const adapter = new LangChainToolAdapter(lc)
-      this.tools.set(lc.name, adapter)
-      this.lcTools.push(lc)
-      log.info('[ToolRegistry] Registered tool: %s', lc.name)
+    this.tools = makeRequirementTools(memory)
+    for (const t of this.tools) {
+      log.info('[ToolRegistry] Registered tool: %s', (t as any).name ?? t)
     }
   }
 
-  getAll(): RegisteredTool[] {
-    return [...this.tools.values()]
-  }
-
-  get(name: string): RegisteredTool | undefined {
-    return this.tools.get(name)
-  }
-
-  toLangChainTools(): StructuredTool[] {
-    return this.lcTools
+  /** Return all registered tools — pass directly to createSession({ tools }). */
+  getAll(): Tool[] {
+    return this.tools
   }
 }

@@ -27,8 +27,8 @@ export default function InputBar(): JSX.Element {
 
   const handleModelSelect = async (value: string): Promise<void> => {
     setPickerOpen(false)
-    if (value !== settings.llmModel) {
-      await saveSettings({ llmModel: value })
+    if (value !== settings.copilotModel) {
+      await saveSettings({ copilotModel: value })
     }
   }
 
@@ -55,7 +55,7 @@ export default function InputBar(): JSX.Element {
     ta.style.height = `${Math.min(ta.scrollHeight, 160)}px`
   }
 
-  const currentLabel = modelLabel(settings.llmModel ?? '')
+  const currentLabel = modelLabel(settings.copilotModel ?? '')
 
   return (
     <div className="px-4 pt-2 pb-2 border-t bg-[var(--bg-secondary)]" style={{ borderColor: 'var(--border)' }}>
@@ -113,7 +113,7 @@ export default function InputBar(): JSX.Element {
                     {g.group}
                   </div>
                   {g.models.map(m => {
-                    const active = m.value === settings.llmModel
+                    const active = m.value === settings.copilotModel
                     return (
                       <button
                         key={m.value}

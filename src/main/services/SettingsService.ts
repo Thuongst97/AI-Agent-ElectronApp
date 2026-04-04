@@ -36,11 +36,10 @@ export class SettingsService {
 
     if (!existsSync(this.filePath)) {
       const fromEnv: Partial<AppSettings> = {
-        githubToken: process.env['GITHUB_TOKEN']  ?? '',
-        llmBaseUrl:  process.env['LLM_BASE_URL']  ?? DEFAULT_SETTINGS.llmBaseUrl,
-        llmModel:    process.env['LLM_MODEL']     ?? DEFAULT_SETTINGS.llmModel,
-        chromaHost:  process.env['CHROMA_HOST']   ?? DEFAULT_SETTINGS.chromaHost,
-        chromaPort:  Number(process.env['CHROMA_PORT']) || DEFAULT_SETTINGS.chromaPort,
+        githubToken:  process.env['GITHUB_TOKEN']   ?? '',
+        copilotModel: process.env['COPILOT_MODEL']  ?? DEFAULT_SETTINGS.copilotModel,
+        chromaHost:   process.env['CHROMA_HOST']    ?? DEFAULT_SETTINGS.chromaHost,
+        chromaPort:   Number(process.env['CHROMA_PORT']) || DEFAULT_SETTINGS.chromaPort,
       }
       this.cache = { ...DEFAULT_SETTINGS, ...fromEnv }
       this._save()
@@ -97,10 +96,20 @@ export class SettingsService {
   set(partial: Partial<AppSettings>): void {
     const current = this.get()
     const incoming = partial.githubToken
+    // TOKEN_MASKED = renderer placeholder meaning "don't change the stored token"
+    // undefined    = field not included in this partial update → keep current
+    // ''           = user explicitly cleared the field → clear stored token
+    // any string   = new token value
     const tokenToStore =
-      !incoming || incoming === TOKEN_MASKED
-        ? current.githubToken   // keep encrypted value unchanged
-        : incoming              // user provided a new token
+      incoming === TOKEN_MASKED || incoming === undefined
+        ? current.githubToken   // keep stored value unchanged
+        : incoming              // new value (may be '' to clear)
+
+    // Reject PATs on new token submissions only (not when keeping the stored value)
+    if (incoming && incoming !== TOKEN_MASKED && incoming.startsWith('ghp_')) {
+      log.warn('[Settings] Rejected PAT token — use `gh auth token` (ghu_…) or leave empty.')
+      throw new Error('Personal Access Tokens (ghp_…) are not supported. Use an OAuth token from `gh auth token` (ghu_…), or leave the field empty to use gh CLI credentials.')
+    }
 
     this.cache = { ...current, ...partial, githubToken: tokenToStore }
     this._save()

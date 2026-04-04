@@ -25,10 +25,10 @@ export class ConversationService {
             id:           data.id,
             title:        data.title,
             createdAt:    data.createdAt,
-            messageCount: data.messages.length,
+            messageCount: data.messages?.length ?? 0,
           }
         })
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+        .sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''))
     } catch (err) {
       log.error('[Conversations] listConversations error', err)
       return []

@@ -1,5 +1,6 @@
 import { app, BrowserWindow, shell, ipcMain } from 'electron'
 import { join } from 'path'
+import { execSync } from 'child_process'
 import { config as loadDotenv } from 'dotenv'
 import { is } from '@electron-toolkit/utils'
 import log from 'electron-log'
@@ -10,6 +11,21 @@ import { registerIpcHandlers } from './ipc/handler'
 // In production bundle: place .env next to the executable.
 loadDotenv()
 log.info('.env loaded')
+
+// ── Use system Node.js for Copilot CLI subprocess ──────────────────────────
+// The @github/copilot SDK spawns the CLI using process.execPath (Electron
+// binary, Node 22 internally). Electron blocks --experimental-sqlite in
+// NODE_OPTIONS, so we instead redirect process.execPath to the system node
+// (v24+) where node:sqlite is stable and needs no flag.
+try {
+  const sysNode = execSync('where node', { encoding: 'utf-8' })
+    .trim().split(/\r?\n/)[0]?.trim()
+  if (sysNode && sysNode !== process.execPath) {
+    process.execPath = sysNode
+  }
+} catch {
+  // system node not on PATH — CLI subprocess will attempt Electron binary
+}
 
 // ── Logging ──────────────────────────────────────────────────────────────────
 log.transports.file.level = 'info'
@@ -44,8 +60,10 @@ function createWindow(): void {
     icon: join(__dirname, '../../resources/icon.png'),
   })
 
-  // Register all IPC channels
-  registerIpcHandlers(mainWindow)
+  // Register all IPC channels (async — starts Copilot CLI in background)
+  registerIpcHandlers(mainWindow).catch(err =>
+    log.error('[App] IPC handler registration failed:', err),
+  )
 
   // Show after paint to avoid white flash
   mainWindow.on('ready-to-show', () => {

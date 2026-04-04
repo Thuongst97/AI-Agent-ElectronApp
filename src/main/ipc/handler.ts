@@ -2,49 +2,44 @@ import { ipcMain, BrowserWindow, app } from 'electron'
 import { join } from 'path'
 import {
   IPC, ChatRequest, AppStatus, ConversationMeta,
-  Message, AppSettings, IngestResult,
+  Message, AppSettings, IngestResult, TOKEN_MASKED,
 } from '../../shared/ipc-types'
-import { SettingsService }      from '../services/SettingsService'
-import { ConversationService }  from '../services/ConversationService'
-import { LLMService }           from '../agent/LLMService'
-import { MemoryService }        from '../agent/MemoryService'
-import { AgentService }         from '../agent/AgentService'
-import { VectorMemoryService }  from '../data/VectorMemoryService'
-import { DataIngester }         from '../data/DataIngester'
-import { ToolRegistry }         from '../tools/ToolRegistry'
+import { SettingsService }          from '../services/SettingsService'
+import { ConversationService }       from '../services/ConversationService'
+import { CopilotClientService }      from '../agent/CopilotClientService'
+import { CopilotAgentService }       from '../agent/CopilotAgentService'
+import { VectorMemoryService }       from '../data/VectorMemoryService'
+import { DataIngester }              from '../data/DataIngester'
+import { ToolRegistry }              from '../tools/ToolRegistry'
 import log from 'electron-log'
 
 // ── Singletons (created once, shared across all IPC calls) ───────────────────
-// Initialised lazily inside registerIpcHandlers so Electron's app.getPath()
-// is available when MemoryService and SettingsService constructors run.
-let _settings:      SettingsService     | null = null
-let _llm:           LLMService          | null = null
-let _memory:        MemoryService       | null = null
-let _agent:         AgentService        | null = null
+let _settings:      SettingsService      | null = null
+let _copilot:       CopilotClientService | null = null
+let _agent:         CopilotAgentService  | null = null
 let _convService:   ConversationService  | null = null
 let _vectorMemory:  VectorMemoryService  | null = null
 let _ingester:      DataIngester         | null = null
 
-/** Cached LLM connection state — updated by probe on startup & settings change. */
-let _llmState:    AppStatus['llm']     = 'disconnected'
+/** Cached connection states — updated by probe on startup & settings change. */
+let _llmState:    AppStatus['llm']      = 'disconnected'
 let _chromaState: AppStatus['chromadb'] = 'disconnected'
 
 function getServices(settings: SettingsService) {
   if (!_convService) _convService = new ConversationService()
-  if (!_llm) {
-    _llm = new LLMService(settings.get())
-    log.info('[Handler] LLMService created (model=%s)', settings.get().llmModel)
+  if (!_copilot) {
+    _copilot = new CopilotClientService(settings.get())
+    log.info('[Handler] CopilotClientService created (model=%s)', settings.get().copilotModel)
   }
-  if (!_memory) _memory = new MemoryService()
-  if (!_agent)  _agent  = new AgentService(_llm, _memory)
-  return { llm: _llm, memory: _memory, agent: _agent, conv: _convService }
+  if (!_agent) _agent = new CopilotAgentService(_copilot, settings.get())
+  return { copilot: _copilot, agent: _agent, conv: _convService }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function registerIpcHandlers(win: BrowserWindow): void {
+export async function registerIpcHandlers(win: BrowserWindow): Promise<void> {
   _settings = new SettingsService()
-  const { agent, conv, llm } = getServices(_settings)
+  const { agent, conv, copilot } = getServices(_settings)
 
   // VectorMemory: init (connects to ChromaDB or falls back to Vectra)
   _vectorMemory = new VectorMemoryService()
@@ -78,25 +73,26 @@ export function registerIpcHandlers(win: BrowserWindow): void {
     log.error('[Handler] VectorMemory init failed:', err)
   })
 
-  // Probe LLM connection in the background at startup
-  llm.probe().then(state => {
-    _llmState = state
-    log.info('[Handler] Startup LLM probe → %s', state)
-  }).catch(() => { _llmState = 'error' })
-
   // ── Chat ───────────────────────────────────────────────────────────────────
   ipcMain.handle(IPC.CHAT_SEND, async (_event, req: ChatRequest) => {
     log.info(`[IPC] chat:send conversationId=${req.conversationId}`)
     try {
-      await agent.chat(req, chunk => win.webContents.send(IPC.CHAT_CHUNK, chunk))
-      // Mirror the user message into ConversationService for the history panel
+      const assistantReply = await agent.chat(req, chunk => win.webContents.send(IPC.CHAT_CHUNK, chunk))
+
+      // Persist both sides of the turn for the history panel
       conv.appendMessages(req.conversationId, [
         {
-          id:        Date.now().toString(),
+          id:        `${Date.now()}-user`,
           role:      'user',
           content:   req.message,
           createdAt: new Date().toISOString(),
         },
+        ...(assistantReply ? [{
+          id:        `${Date.now()}-assistant`,
+          role:      'assistant' as const,
+          content:   assistantReply,
+          createdAt: new Date().toISOString(),
+        }] : []),
       ])
     } catch (err) {
       log.error('[IPC] chat:send error', err)
@@ -106,7 +102,7 @@ export function registerIpcHandlers(win: BrowserWindow): void {
 
   ipcMain.handle(IPC.CHAT_RESET, async (_event, conversationId: string) => {
     log.info(`[IPC] chat:reset conversationId=${conversationId}`)
-    agent.reset(conversationId)
+    await agent.reset(conversationId)
   })
 
   // ── History ────────────────────────────────────────────────────────────────
@@ -120,21 +116,25 @@ export function registerIpcHandlers(win: BrowserWindow): void {
 
   ipcMain.handle(IPC.HISTORY_DELETE, async (_event, id: string): Promise<void> => {
     conv.deleteConversation(id)
+    // Also delete the SDK session from disk
+    await agent.reset(id)
   })
 
   // ── Settings ───────────────────────────────────────────────────────────────
   ipcMain.handle(IPC.SETTINGS_GET, async (): Promise<AppSettings> => {
-    // Never expose the real token to the renderer — return masked version
     return _settings!.getForRenderer()
   })
 
   ipcMain.handle(IPC.SETTINGS_SET, async (_event, partial: Partial<AppSettings>): Promise<void> => {
     _settings!.set(partial)
-    // Rebuild LLM client with updated credentials / model
-    llm.updateSettings(_settings!.get())
-    // Re-probe connection with new settings
-    llm.probe().then(state => { _llmState = state }).catch(() => { _llmState = 'error' })
-    log.info('[IPC] Settings updated — LLM rebuilt')
+    const updated = _settings!.get()
+    agent.updateSettings(updated)
+    // Rebuild Copilot client if the token was explicitly changed (including clearing it)
+    if (partial.githubToken !== undefined && partial.githubToken !== TOKEN_MASKED) {
+      await copilot.updateSettings(updated)
+      copilot.probe().then(state => { _llmState = state }).catch(() => { _llmState = 'error' })
+    }
+    log.info('[IPC] Settings updated')
   })
 
   // ── Data ingest ────────────────────────────────────────────────────────────
@@ -144,15 +144,13 @@ export function registerIpcHandlers(win: BrowserWindow): void {
       return { success: false, inserted: 0, skipped: 0, errors: ['Vector memory not initialised'] }
     }
     const result = await _ingester.ingestFile(filePath)
-    // Refresh chromadb state after a successful ingest
-    _chromaState = await _vectorMemory.probe()
+    _chromaState = await _vectorMemory.probe().catch(() => 'error' as const)
     return result
   })
 
   // ── Status ─────────────────────────────────────────────────────────────────
   ipcMain.handle(IPC.STATUS_GET, async (): Promise<AppStatus> => {
-    // Re-probe both services for a fresh reading on every status request
-    if (_llm)          _llmState    = await llm.probe().catch(() => 'error' as const)
+    if (_copilot)      _llmState    = await copilot.probe().catch(() => 'error' as const)
     if (_vectorMemory) _chromaState = await _vectorMemory.probe().catch(() => 'error' as const)
     return {
       llm:      _llmState,
@@ -162,4 +160,26 @@ export function registerIpcHandlers(win: BrowserWindow): void {
   })
 
   log.info('[IPC] All handlers registered')
+
+  // ── Start async services after handlers are registered ──────────────────
+  // Graceful shutdown — stop the CLI subprocess before quitting
+  app.on('before-quit', async () => {
+    log.info('[Handler] App quitting — stopping Copilot client')
+    await copilot.stop().catch(() => {})
+  })
+
+  // Start the Copilot CLI and probe (fire-and-forget — never blocks handler reg)
+  copilot.start()
+    .then(() => {
+      log.info('[Handler] CopilotClientService started')
+      return copilot.probe()
+    })
+    .then(state => {
+      _llmState = state
+      log.info('[Handler] Startup probe → %s', state)
+    })
+    .catch(err => {
+      _llmState = 'error'
+      log.error('[Handler] Copilot start/probe failed:', err)
+    })
 }

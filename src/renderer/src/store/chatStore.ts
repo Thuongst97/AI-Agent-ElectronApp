@@ -128,10 +128,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     if (chunk.type === 'final' || chunk.type === 'error') {
       const { streamingContent } = get()
+      // Use streamingContent if tokens streamed in real-time; fall back to
+      // chunk.content (= fullReply from agent) when no delta events fired.
       const assistantMsg: Message = {
         id:        nanoid(),
         role:      'assistant',
-        content:   chunk.type === 'error' ? `⚠️ ${chunk.content}` : streamingContent,
+        content:   chunk.type === 'error' ? `⚠️ ${chunk.content}` : (streamingContent || chunk.content),
         createdAt: new Date().toISOString(),
       }
       set(s => ({

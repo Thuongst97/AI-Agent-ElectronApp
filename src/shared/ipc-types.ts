@@ -79,27 +79,23 @@ export interface ConversationMeta {
 // ── Settings ──────────────────────────────────────────────────────────────────
 
 export interface AppSettings {
-  githubToken:    string
-  llmBaseUrl:     string
-  llmModel:       string
-  llmMaxTokens:   number
-  llmTemperature: number
-  chromaHost:     string
-  chromaPort:     number
-  theme:          'light' | 'dark' | 'system'
-  logLevel:       'debug' | 'info' | 'warn' | 'error'
+  githubToken:     string
+  copilotModel:    string
+  reasoningEffort: 'low' | 'medium' | 'high' | 'xhigh' | null
+  chromaHost:      string
+  chromaPort:      number
+  theme:           'light' | 'dark' | 'system'
+  logLevel:        'debug' | 'info' | 'warn' | 'error'
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
-  githubToken:    '',
-  llmBaseUrl:     'https://models.inference.ai.azure.com',
-  llmModel:       'gpt-4o',
-  llmMaxTokens:   4096,
-  llmTemperature: 0.2,
-  chromaHost:     'localhost',
-  chromaPort:     8000,
-  theme:          'system',
-  logLevel:       'info',
+  githubToken:     '',
+  copilotModel:    'gpt-4o',
+  reasoningEffort: null,
+  chromaHost:      'localhost',
+  chromaPort:      8000,
+  theme:           'system',
+  logLevel:        'info',
 }
 
 // ── Data ingest ───────────────────────────────────────────────────────────────
