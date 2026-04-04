@@ -1,0 +1,112 @@
+requirement_id,user_story,description,assignee
+APP_01010,US_1.0,"The telematics application shall provide a user login screen with username/password and biometric authentication options.",harry
+APP_01020,US_1.0,"The telematics application shall support role-based access control (Admin, Fleet Manager, Driver, Viewer).",vtee
+APP_01030,US_1.0,"The telematics application shall integrate with OAuth 2.0 / OpenID Connect for single sign-on (SSO).",stee
+APP_01040,US_1.0.1,"The telematics application shall enforce password complexity rules (min 8 chars, uppercase, lowercase, digit, special char).",harry
+APP_01050,US_1.0.1,"The telematics application shall lock the user account after 5 consecutive failed login attempts for 15 minutes.",vtee
+APP_01060,US_1.0.1,"The telematics application shall support multi-factor authentication (MFA) via SMS or authenticator app.",stee
+APP_01070,US_1.0.1,"The telematics application shall automatically log out idle sessions after a configurable timeout (default: 30 minutes).",harry
+APP_01080,US_2.0,"The telematics application shall display a real-time map view showing all connected vehicles with live position updates.",vtee
+APP_01090,US_2.0,"The telematics application shall support map layers including satellite, terrain, and traffic overlays.",stee
+APP_01100,US_2.0,"The telematics application shall allow users to click on a vehicle marker to view detailed vehicle status information.",harry
+APP_01110,US_2.0,"The telematics application shall update vehicle positions on the map at a minimum refresh rate of 5 seconds.",vtee
+APP_01120,US_2.0.1,"The telematics application shall support vehicle clustering on the map when zoom level shows overlapping markers.",stee
+APP_01130,US_2.0.1,"The telematics application shall display vehicle heading direction on map markers.",harry
+APP_01140,US_2.0.1,"The telematics application shall allow users to filter displayed vehicles by group, status, or custom tags.",vtee
+APP_01150,US_2.0.1,"The telematics application shall support historical route playback with adjustable playback speed (1x to 20x).",stee
+APP_01160,US_2.1,"The telematics application shall display a fleet dashboard with summary KPIs (total vehicles, active, idle, offline).",harry
+APP_01170,US_2.1,"The telematics application shall display average fleet fuel consumption on the dashboard.",vtee
+APP_01180,US_2.1,"The telematics application shall display total fleet distance traveled (daily, weekly, monthly) on the dashboard.",stee
+APP_01190,US_2.1,"The telematics application shall display a driver behavior score summary (fleet average and per-driver) on the dashboard.",harry
+APP_01200,US_2.1.1,"The telematics application dashboard shall support configurable widgets that users can add, remove, and rearrange.",vtee
+APP_01210,US_2.1.1,"The telematics application shall display real-time alert count and severity breakdown on the dashboard.",stee
+APP_01220,US_3.0,"The telematics application shall allow users to create geofences by drawing circular or polygonal regions on the map.",harry
+APP_01230,US_3.0,"The telematics application shall allow users to name, categorize, and assign colors to geofences.",vtee
+APP_01240,US_3.0,"The telematics application shall generate alerts when a vehicle enters or exits a configured geofence.",stee
+APP_01250,US_3.0,"The telematics application shall support geofence scheduling (active only during specified time windows).",harry
+APP_01260,US_3.0.1,"The telematics application shall support importing geofences from KML/GeoJSON files.",vtee
+APP_01270,US_3.0.1,"The telematics application shall support exporting geofence definitions to KML/GeoJSON format.",stee
+APP_01280,US_3.0.1,"The telematics application shall display a geofence violation history report filterable by vehicle, geofence, and date range.",harry
+APP_01290,US_3.1,"The telematics application shall support speed limit alerts configurable per geofence or road segment.",vtee
+APP_01300,US_3.1,"The telematics application shall generate an over-speed alert when vehicle exceeds the configured speed threshold.",stee
+APP_01310,US_3.1,"The telematics application shall log all speed violations with timestamp, location, speed, and limit.",harry
+APP_01320,US_4.0,"The telematics application shall provide a notification center displaying all alerts sorted by time and severity.",vtee
+APP_01330,US_4.0,"The telematics application shall support alert delivery via in-app notification, email, and SMS.",stee
+APP_01340,US_4.0,"The telematics application shall support configurable alert rules (trigger conditions, recipients, channels).",harry
+APP_01350,US_4.0,"The telematics application shall support alert escalation if not acknowledged within a configurable time period.",vtee
+APP_01360,US_4.0.1,"The telematics application shall support alert suppression rules to prevent notification flooding.",stee
+APP_01370,US_4.0.1,"The telematics application shall allow users to acknowledge, snooze, or dismiss alerts.",harry
+APP_01380,US_4.0.1,"The telematics application shall categorize alerts by type: geofence, speed, maintenance, driver behavior, system.",vtee
+APP_01390,US_5.0,"The telematics application shall provide a trip history view showing all trips per vehicle with start/end time and distance.",stee
+APP_01400,US_5.0,"The telematics application shall display trip route on the map with color-coded speed segments.",harry
+APP_01410,US_5.0,"The telematics application shall calculate and display trip duration, average speed, max speed, and fuel consumed per trip.",vtee
+APP_01420,US_5.0,"The telematics application shall allow users to export trip reports as CSV or PDF.",stee
+APP_01430,US_5.0.1,"The telematics application shall support trip detection based on ignition ON/OFF events.",harry
+APP_01440,US_5.0.1,"The telematics application shall detect and flag stop events within trips (duration, location).",vtee
+APP_01450,US_5.0.1,"The telematics application shall support merging short trips separated by brief stops into a single trip.",stee
+APP_01460,US_6.0,"The telematics application shall display a driver scorecard based on harsh braking, acceleration, cornering, and speeding events.",harry
+APP_01470,US_6.0,"The telematics application shall rank drivers by behavior score within a fleet or group.",vtee
+APP_01480,US_6.0,"The telematics application shall display driver behavior trends over configurable time periods (week, month, quarter).",stee
+APP_01490,US_6.0,"The telematics application shall generate automatic coaching recommendations based on driver behavior patterns.",harry
+APP_01500,US_6.0.1,"The telematics application shall allow fleet managers to set driver behavior score thresholds for alerts.",vtee
+APP_01510,US_6.0.1,"The telematics application shall support driver identification via Bluetooth driver ID tags or login-based assignment.",stee
+APP_01520,US_6.1,"The telematics application shall detect and report distracted driving events (e.g., phone usage via accelerometer patterns).",harry
+APP_01530,US_6.1,"The telematics application shall detect and report fatigue driving events based on driving duration and time of day.",vtee
+APP_01540,US_7.0,"The telematics application shall display vehicle health status including DTC codes with descriptions.",stee
+APP_01550,US_7.0,"The telematics application shall provide predictive maintenance alerts based on mileage, engine hours, and DTC history.",harry
+APP_01560,US_7.0,"The telematics application shall track and display maintenance schedules per vehicle (oil change, tire rotation, inspection).",vtee
+APP_01570,US_7.0,"The telematics application shall send maintenance due reminders to fleet managers and assigned drivers.",stee
+APP_01580,US_7.0.1,"The telematics application shall allow users to log completed maintenance activities with date, type, cost, and notes.",harry
+APP_01590,US_7.0.1,"The telematics application shall display battery health status and generate low-battery alerts.",vtee
+APP_01600,US_7.0.1,"The telematics application shall provide a maintenance cost tracking report per vehicle and fleet-wide.",stee
+APP_01610,US_8.0,"The telematics application shall generate fleet utilization reports (usage rate, idle time, distance per vehicle).",harry
+APP_01620,US_8.0,"The telematics application shall generate fuel consumption reports with trend analysis.",vtee
+APP_01630,US_8.0,"The telematics application shall generate driver behavior summary reports with configurable date ranges.",stee
+APP_01640,US_8.0,"The telematics application shall generate geofence compliance reports.",harry
+APP_01650,US_8.0.1,"The telematics application shall support scheduled automatic report generation and email delivery.",vtee
+APP_01660,US_8.0.1,"The telematics application shall support report export in CSV, PDF, and Excel formats.",stee
+APP_01670,US_8.0.1,"The telematics application shall provide interactive charts (bar, line, pie) within all report views.",harry
+APP_01680,US_8.1,"The telematics application shall support custom report builder allowing users to select data fields and filters.",vtee
+APP_01690,US_8.1,"The telematics application shall support report templates that can be saved and reused.",stee
+APP_01700,US_9.0,"The telematics application shall allow fleet managers to send remote door lock/unlock commands to vehicles.",harry
+APP_01710,US_9.0,"The telematics application shall allow authorized users to send remote engine immobilization commands.",vtee
+APP_01720,US_9.0,"The telematics application shall display real-time command execution status (pending, sent, acknowledged, executed, failed).",stee
+APP_01730,US_9.0,"The telematics application shall require confirmation dialog before executing critical remote commands.",harry
+APP_01740,US_9.0.1,"The telematics application shall log all remote commands with user, timestamp, vehicle, command type, and result.",vtee
+APP_01750,US_9.0.1,"The telematics application shall restrict remote command access based on user role and permissions.",stee
+APP_01760,US_10.0,"The telematics application shall support vehicle grouping and hierarchical fleet organization.",harry
+APP_01770,US_10.0,"The telematics application shall allow bulk operations (assign geofence, update settings) on vehicle groups.",vtee
+APP_01780,US_10.0,"The telematics application shall provide a vehicle inventory view with details (VIN, model, year, SIM, firmware version).",stee
+APP_01790,US_10.0,"The telematics application shall support vehicle onboarding workflow with step-by-step provisioning.",harry
+APP_01800,US_10.0.1,"The telematics application shall support vehicle decommissioning with data archival option.",vtee
+APP_01810,US_10.0.1,"The telematics application shall display firmware version per vehicle and support OTA update initiation from the UI.",stee
+APP_01820,US_10.0.1,"The telematics application shall display OTA update progress and history per vehicle.",harry
+APP_01830,US_11.0,"The telematics application shall provide a responsive web design supporting desktop (1920x1080) and tablet (1024x768) resolutions.",vtee
+APP_01840,US_11.0,"The telematics application shall support modern browsers: Chrome, Firefox, Edge, Safari (latest 2 versions).",stee
+APP_01850,US_11.0,"The telematics application shall provide a native mobile app (iOS and Android) with core tracking and alert features.",harry
+APP_01860,US_11.0,"The telematics application shall support push notifications on mobile devices for critical alerts.",vtee
+APP_01870,US_11.0.1,"The telematics application shall load the dashboard within 3 seconds on a standard broadband connection.",stee
+APP_01880,US_11.0.1,"The telematics application shall support dark mode and light mode themes.",harry
+APP_01890,US_11.0.1,"The telematics application shall support localization for at least English, German, and Japanese languages.",vtee
+APP_01900,US_12.0,"The telematics application backend shall expose a RESTful API for third-party integrations.",stee
+APP_01910,US_12.0,"The telematics application API shall use API key and OAuth 2.0 token-based authentication.",harry
+APP_01920,US_12.0,"The telematics application API shall support rate limiting (configurable requests per minute per client).",vtee
+APP_01930,US_12.0,"The telematics application shall provide webhook support for event-driven integrations.",stee
+APP_01940,US_12.0.1,"The telematics application API shall include versioning (e.g., /api/v1/) for backward compatibility.",harry
+APP_01950,US_12.0.1,"The telematics application shall provide Swagger/OpenAPI documentation for all API endpoints.",vtee
+APP_01960,US_12.1,"The telematics application shall support integration with ERP systems for maintenance cost and fuel card data.",stee
+APP_01970,US_12.1,"The telematics application shall support integration with insurance telematics platforms for UBI data sharing.",harry
+APP_01980,US_13.0,"The telematics application shall encrypt all data at rest using AES-256 encryption.",vtee
+APP_01990,US_13.0,"The telematics application shall enforce HTTPS (TLS 1.2+) for all client-server communications.",stee
+APP_02000,US_13.0,"The telematics application shall maintain a complete audit trail of user actions (login, commands, config changes).",harry
+APP_02010,US_13.0.1,"The telematics application shall comply with GDPR data privacy requirements including data export and deletion requests.",vtee
+APP_02020,US_13.0.1,"The telematics application shall implement CSRF, XSS, and SQL injection protection measures.",stee
+APP_02030,US_13.0.1,"The telematics application shall support data retention policies with configurable auto-purge for aged telemetry data.",harry
+APP_02040,US_14.0,"The telematics application backend shall support horizontal scaling to handle up to 100,000 connected vehicles.",vtee
+APP_02050,US_14.0,"The telematics application shall maintain 99.9% uptime SLA for core tracking and alerting services.",stee
+APP_02060,US_14.0,"The telematics application shall support database read replicas for high-availability reporting queries.",harry
+APP_02070,US_14.0.1,"The telematics application shall implement message queuing (e.g., Kafka, RabbitMQ) for asynchronous telemetry processing.",vtee
+APP_02080,US_14.0.1,"The telematics application shall support containerized deployment via Docker and Kubernetes.",stee
+APP_02090,US_14.0.1,"The telematics application shall implement health check endpoints for all microservices.",harry
+APP_02100,US_14.1,"The telematics application shall support automated CI/CD pipelines for build, test, and deployment.",vtee
+APP_02110,US_14.1,"The telematics application shall support blue-green or canary deployment strategies for zero-downtime releases.",stee

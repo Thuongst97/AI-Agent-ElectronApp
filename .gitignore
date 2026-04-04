@@ -1,0 +1,23 @@
+node_modules/
+out/
+dist/
+.env
+*.env.local
+
+# Electron build artifacts
+dist-electron/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# TypeScript
+*.tsbuildinfo
+
+# Editor
+.vscode/settings.json
+.idea/

@@ -1,0 +1,205 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* ── Dark theme (default) ─────────────────────────────────────────────── */
+  :root,
+  [data-theme="dark"] {
+    color-scheme: dark;
+    --bg-primary:        #0f172a;
+    --bg-secondary:      #1e293b;
+    --bg-tertiary:       #253352;
+    --surface:           #1e293b;
+    --surface-hover:     #293548;
+    --text-primary:      #f1f5f9;
+    --text-muted:        #94a3b8;
+    --text-faint:        #475569;
+    --border:            #334155;
+    --accent:            #3b82f6;
+    --accent-hover:      #2563eb;
+    --error:             #f87171;
+    --success:           #34d399;
+    --tool-bg:           #1a2744;
+    --code-bg:           #0f172a;
+    --code-inline:       #334155;
+    --table-border:      #475569;
+    --table-header-bg:   #334155;
+    --table-header-text: #94a3b8;
+    --scrollbar-thumb:   #475569;
+  }
+
+  /* ── Light theme ──────────────────────────────────────────────────────── */
+  [data-theme="light"] {
+    color-scheme: light;
+    --bg-primary:        #f1f5f9;
+    --bg-secondary:      #ffffff;
+    --bg-tertiary:       #e2e8f0;
+    --surface:           #ffffff;
+    --surface-hover:     #f1f5f9;
+    --text-primary:      #0f172a;
+    --text-muted:        #64748b;
+    --text-faint:        #94a3b8;
+    --border:            #cbd5e1;
+    --accent:            #2563eb;
+    --accent-hover:      #1d4ed8;
+    --error:             #dc2626;
+    --success:           #16a34a;
+    --tool-bg:           #dbeafe;
+    --code-bg:           #f8fafc;
+    --code-inline:       #e2e8f0;
+    --table-border:      #cbd5e1;
+    --table-header-bg:   #e2e8f0;
+    --table-header-text: #475569;
+    --scrollbar-thumb:   #94a3b8;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body, #root {
+    height: 100vh;
+    overflow: hidden;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* Scrollbars */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+}
+
+@layer components {
+  /* Electron drag region for frameless window */
+  .titlebar-drag {
+    -webkit-app-region: drag;
+  }
+  .titlebar-no-drag {
+    -webkit-app-region: no-drag;
+  }
+
+  /* Message bubbles */
+  .bubble-user {
+    @apply bg-brand-600 text-white rounded-2xl rounded-br-sm px-4 py-2.5 max-w-[75%] self-end;
+  }
+  .bubble-assistant {
+    background: var(--surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    @apply rounded-2xl rounded-bl-sm px-4 py-2.5 max-w-[85%] self-start;
+  }
+  .bubble-tool {
+    background: var(--tool-bg);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    @apply rounded-xl px-3 py-2 max-w-[85%] self-start text-xs font-mono;
+  }
+
+  /* Input bar — unified box (textarea + toolbar inside) */
+  .input-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    @apply rounded-2xl overflow-hidden transition-colors w-full;
+  }
+  .input-box:focus-within { border-color: var(--accent); }
+  .input-box textarea {
+    background: transparent;
+    color: var(--text-primary);
+    min-height: 2rem;
+    max-height: 10rem;
+    @apply w-full resize-none outline-none px-4 pt-2 pb-1;
+  }
+  .input-box textarea::placeholder { color: var(--text-faint); }
+
+  /* Legacy standalone input-bar (kept for any other usage) */
+  .input-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    @apply rounded-2xl px-4 py-3 resize-none outline-none
+           transition-colors w-full;
+  }
+  .input-bar::placeholder { color: var(--text-faint); }
+  .input-bar:focus { border-color: var(--accent); }
+
+  /* Sidebar */
+  .sidebar-item {
+    color: var(--text-muted);
+    @apply flex items-center gap-2 px-3 py-1.5 rounded-lg
+           cursor-pointer text-sm transition-colors;
+  }
+  .sidebar-item:hover {
+    background: var(--surface-hover);
+    color: var(--text-primary);
+  }
+  .sidebar-item.active {
+    background: var(--surface-hover);
+    color: var(--text-primary);
+  }
+
+  /* Buttons */
+  .btn-primary {
+    @apply bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-lg
+           text-sm font-medium transition-colors disabled:opacity-50
+           disabled:cursor-not-allowed;
+  }
+  .btn-ghost {
+    color: var(--text-muted);
+    @apply px-3 py-1.5 rounded-lg text-sm transition-colors;
+  }
+  .btn-ghost:hover {
+    background: var(--surface-hover);
+    color: var(--text-primary);
+  }
+
+  /* Status badge */
+  .status-dot {
+    @apply w-2 h-2 rounded-full;
+  }
+  .status-dot.connected    { background: var(--success); }
+  .status-dot.disconnected { background: var(--text-faint); }
+  .status-dot.error        { background: var(--error); }
+
+  /* Code / table inside markdown */
+  .prose-mimi pre {
+    background: var(--code-bg);
+    color: var(--text-primary);
+    @apply rounded-lg p-3 overflow-x-auto text-xs font-mono my-2;
+  }
+  .prose-mimi code:not(pre code) {
+    background: var(--code-inline);
+    color: var(--text-primary);
+    @apply rounded px-1 py-0.5 text-xs font-mono;
+  }
+  .prose-mimi table {
+    @apply w-full border-collapse text-xs my-2;
+  }
+  .prose-mimi th, .prose-mimi td {
+    border-color: var(--table-border);
+    color: var(--text-primary);
+    @apply border px-2 py-1 text-left;
+  }
+  .prose-mimi th {
+    background: var(--table-header-bg);
+    color: var(--table-header-text);
+    @apply font-semibold;
+  }
+
+  /* Thinking pulse */
+  .thinking-dot {
+    @apply w-2 h-2 rounded-full bg-brand-500;
+    animation: pulse-dot 1.2s ease-in-out infinite;
+  }
+  .thinking-dot:nth-child(2) { animation-delay: 0.2s; }
+  .thinking-dot:nth-child(3) { animation-delay: 0.4s; }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50%       { opacity: 1;   transform: scale(1);   }
+}

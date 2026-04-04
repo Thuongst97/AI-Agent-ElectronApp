@@ -1,0 +1,46 @@
+appId: com.thuong.ai-agent
+productName: AI Agent
+copyright: Copyright © 2026 Thuong
+directories:
+  buildResources: resources
+  output: dist
+
+files:
+  - out/**/*
+  - '!**/*.map'
+
+extraResources:
+  - from: data/requirements
+    to: requirements
+
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  icon: resources/icon.ico
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  installerIcon: resources/icon.ico
+  uninstallerIcon: resources/icon.ico
+  installerHeaderIcon: resources/icon.ico
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: AI Agent
+
+mac:
+  target:
+    - target: dmg
+      arch: [x64, arm64]
+  icon: resources/icon.icns
+  category: public.app-category.productivity
+
+linux:
+  target: AppImage
+  icon: resources/icon.png
+  category: Utility
+
+publish:
+  provider: github
+  releaseType: release

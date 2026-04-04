@@ -1,0 +1,112 @@
+requirement_id,user_story,description,assignee
+Core_01110,US_1.0,"The telematics ECU shall boot up and be operational within 5 seconds after ignition ON.",mimi
+Core_01120,US_1.0,"The telematics ECU shall enter low-power sleep mode within 30 seconds after ignition OFF.",teetee
+Core_01130,US_1.0,"The telematics ECU shall support a watchdog timer to detect and recover from software hangs within 2 seconds.",mimi
+Core_01140,US_1.0,"The telematics ECU shall perform a power-on self-test (POST) at every startup and report results.",teetee
+Core_01150,US_1.0.1,"The telematics ECU shall support over-the-air (OTA) firmware updates for all onboard software components.",mimi
+Core_01160,US_1.0.1,"The OTA update mechanism shall support differential (delta) updates to minimize download size.",teetee
+Core_01170,US_1.0.1,"The telematics ECU shall verify firmware integrity using SHA-256 checksum before applying an OTA update.",mimi
+Core_01180,US_1.0.1,"The telematics ECU shall support rollback to the previous firmware version if an OTA update fails.",teetee
+Core_01190,US_1.0.1,"The telematics ECU shall notify the backend server of OTA update status (success/failure/rollback).",mimi
+Core_01200,US_1.1,"The telematics ECU shall support 4G LTE Cat-1 cellular connectivity as the primary communication channel.",teetee
+Core_01210,US_1.1,"The telematics ECU shall support automatic fallback to 2G/3G when 4G LTE is unavailable.",mimi
+Core_01220,US_1.1,"The telematics ECU shall support Wi-Fi 802.11 b/g/n for local connectivity and diagnostics.",teetee
+Core_01230,US_1.1,"The telematics ECU shall support Bluetooth 5.0 BLE for short-range device communication.",mimi
+Core_01240,US_1.1,"The telematics ECU shall support GNSS (GPS + GLONASS) for vehicle positioning with accuracy ≤ 2.5 meters CEP.",teetee
+Core_01250,US_1.1.1,"The telematics ECU shall support simultaneous cellular and GNSS operation without mutual interference.",mimi
+Core_01260,US_1.1.1,"The telematics ECU shall buffer telemetry data locally when cellular connectivity is lost and transmit upon reconnection.",teetee
+Core_01270,US_1.1.1,"The local data buffer shall support a minimum of 72 hours of telemetry data storage.",mimi
+Core_01280,US_1.2,"The telematics ECU shall communicate with vehicle ECUs via CAN 2.0B at 500 kbps.",teetee
+Core_01290,US_1.2,"The telematics ECU shall support CAN-FD communication at up to 5 Mbps data rate.",mimi
+Core_01300,US_1.2,"The telematics ECU shall support at least 2 independent CAN bus interfaces.",teetee
+Core_01310,US_1.2,"The telematics ECU shall support UDS (ISO 14229) diagnostic protocol over CAN.",mimi
+Core_01320,US_1.2,"The telematics ECU shall support OBD-II PID reading for standard vehicle parameters.",teetee
+Core_01330,US_1.2.1,"The telematics ECU shall decode DBC-defined CAN messages for vehicle signal extraction.",mimi
+Core_01340,US_1.2.1,"The telematics ECU shall support configurable CAN message filtering to reduce processing overhead.",teetee
+Core_01350,US_2.0,"The telematics ECU shall collect and transmit vehicle speed data at a minimum rate of 1 Hz.",mimi
+Core_01360,US_2.0,"The telematics ECU shall collect and transmit engine RPM data at a minimum rate of 1 Hz.",teetee
+Core_01370,US_2.0,"The telematics ECU shall collect and transmit fuel level data at a minimum rate of 0.1 Hz.",mimi
+Core_01380,US_2.0,"The telematics ECU shall collect and transmit odometer reading at a minimum rate of 0.1 Hz.",teetee
+Core_01390,US_2.0,"The telematics ECU shall collect and transmit engine coolant temperature at a minimum rate of 0.5 Hz.",mimi
+Core_01400,US_2.0.1,"The telematics ECU shall collect and transmit battery voltage at a minimum rate of 0.5 Hz.",teetee
+Core_01410,US_2.0.1,"The telematics ECU shall collect and transmit DTC (Diagnostic Trouble Codes) upon detection.",mimi
+Core_01420,US_2.0.1,"The telematics ECU shall timestamp all collected telemetry data using UTC with millisecond precision.",teetee
+Core_01430,US_2.1,"The telematics ECU shall transmit telemetry data to the backend server using MQTT protocol.",mimi
+Core_01440,US_2.1,"The MQTT connection shall use TLS 1.2 or higher for data encryption in transit.",teetee
+Core_01450,US_2.1,"The telematics ECU shall support configurable MQTT topic structure for data routing.",mimi
+Core_01460,US_2.1,"The telematics ECU shall support MQTT QoS level 1 (at-least-once delivery) for critical data.",teetee
+Core_01470,US_2.1,"The telematics ECU shall support MQTT QoS level 0 (at-most-once delivery) for non-critical streaming data.",mimi
+Core_01480,US_2.1.1,"The telematics ECU shall support configurable telemetry upload intervals (range: 1 second to 24 hours).",teetee
+Core_01490,US_2.1.1,"The telematics ECU shall compress telemetry payloads using gzip before transmission when payload exceeds 1 KB.",mimi
+Core_01500,US_3.0,"The telematics ECU shall support real-time vehicle tracking with position updates at a configurable rate (1-10 Hz).",teetee
+Core_01510,US_3.0,"The telematics ECU shall support geofence definition (circular and polygonal) with entry/exit event triggers.",mimi
+Core_01520,US_3.0,"The telematics ECU shall generate an alert event when the vehicle enters or exits a defined geofence.",teetee
+Core_01530,US_3.0,"The telematics ECU shall support a minimum of 100 simultaneously active geofences.",mimi
+Core_01540,US_3.0.1,"The telematics ECU shall calculate and report trip distance based on GNSS data.",teetee
+Core_01550,US_3.0.1,"The telematics ECU shall detect and report vehicle idle events (engine ON, speed = 0 for configurable duration).",mimi
+Core_01560,US_3.1,"The telematics ECU shall detect harsh braking events (deceleration exceeding configurable g-force threshold).",teetee
+Core_01570,US_3.1,"The telematics ECU shall detect harsh acceleration events (acceleration exceeding configurable g-force threshold).",mimi
+Core_01580,US_3.1,"The telematics ECU shall detect sharp cornering events (lateral g-force exceeding configurable threshold).",teetee
+Core_01590,US_3.1,"The telematics ECU shall integrate a 3-axis accelerometer with a range of ±16g and sampling rate ≥ 100 Hz.",mimi
+Core_01600,US_3.1,"The telematics ECU shall integrate a 3-axis gyroscope for vehicle orientation detection.",teetee
+Core_01610,US_3.1.1,"The telematics ECU shall detect potential crash events based on accelerometer impact signature and trigger an emergency alert.",mimi
+Core_01620,US_3.1.1,"The crash detection alert shall include GPS coordinates, timestamp, impact severity, and vehicle ID.",teetee
+Core_01630,US_4.0,"The telematics ECU shall support remote door lock/unlock commands from the backend server.",mimi
+Core_01640,US_4.0,"The telematics ECU shall support remote engine immobilization command with safety interlocks (only when vehicle speed = 0).",teetee
+Core_01650,US_4.0,"The telematics ECU shall support remote horn and light activation for vehicle location.",mimi
+Core_01660,US_4.0,"The telematics ECU shall authenticate all remote commands using digital signatures before execution.",teetee
+Core_01670,US_4.0.1,"The telematics ECU shall acknowledge remote command execution within 5 seconds of receipt.",mimi
+Core_01680,US_4.0.1,"The telematics ECU shall log all received remote commands with timestamp and execution status.",teetee
+Core_01690,US_4.1,"The telematics ECU shall support remote vehicle diagnostics request from the backend server.",mimi
+Core_01700,US_4.1,"The telematics ECU shall support remote configuration parameter updates (e.g., upload interval, geofence definitions).",teetee
+Core_01710,US_5.0,"The telematics ECU shall use a secure boot mechanism to prevent unauthorized firmware execution.",mimi
+Core_01720,US_5.0,"The telematics ECU shall store cryptographic keys in a hardware security module (HSM) or secure element.",teetee
+Core_01730,US_5.0,"The telematics ECU shall support X.509 certificate-based mutual authentication with the backend server.",mimi
+Core_01740,US_5.0,"The telematics ECU shall encrypt all stored sensitive data (keys, credentials) using AES-256.",teetee
+Core_01750,US_5.0.1,"The telematics ECU shall support certificate rotation and revocation mechanisms.",mimi
+Core_01760,US_5.0.1,"The telematics ECU shall implement intrusion detection for CAN bus anomaly monitoring.",teetee
+Core_01770,US_5.0.1,"The telematics ECU shall disable debug interfaces (JTAG, UART) in production firmware.",mimi
+Core_01780,US_5.1,"The telematics ECU shall comply with UNECE WP.29 R155 cybersecurity regulations.",teetee
+Core_01790,US_5.1,"The telematics ECU shall support firmware signing with RSA-2048 or ECDSA-P256 digital signatures.",mimi
+Core_01800,US_6.0,"The telematics ECU operating temperature range shall be -40°C to +85°C.",teetee
+Core_01810,US_6.0,"The telematics ECU shall withstand vibration per ISO 16750-3 for vehicle-mounted electronics.",mimi
+Core_01820,US_6.0,"The telematics ECU enclosure shall meet IP67 ingress protection rating.",teetee
+Core_01830,US_6.0,"The telematics ECU shall operate with input voltage range of 9V to 32V DC (12V/24V vehicle systems).",mimi
+Core_01840,US_6.0,"The telematics ECU shall include reverse polarity protection on the power supply input.",teetee
+Core_01850,US_6.0.1,"The telematics ECU shall include transient voltage suppression (TVS) for load dump protection per ISO 7637-2.",mimi
+Core_01860,US_6.0.1,"The telematics ECU quiescent current in sleep mode shall be ≤ 5 mA.",teetee
+Core_01870,US_6.0.1,"The telematics ECU peak power consumption shall not exceed 5W during normal operation.",mimi
+Core_01880,US_6.1,"The telematics ECU shall comply with EMC requirements per CISPR 25 Class 5.",teetee
+Core_01890,US_6.1,"The telematics ECU shall comply with ESD requirements per ISO 10605.",mimi
+Core_01900,US_6.1,"The telematics ECU PCB shall use a minimum of 4-layer stackup for signal integrity and EMI control.",teetee
+Core_01910,US_7.0,"The telematics ECU application software shall be based on a real-time operating system (RTOS) or embedded Linux.",mimi
+Core_01920,US_7.0,"The telematics ECU software shall implement a modular architecture with clearly defined API boundaries between components.",teetee
+Core_01930,US_7.0,"The telematics ECU shall support a task scheduler capable of managing at least 20 concurrent tasks.",mimi
+Core_01940,US_7.0,"The telematics ECU shall implement software-based fault management with automatic service restart on failure.",teetee
+Core_01950,US_7.0.1,"The telematics ECU shall log all software exceptions and system errors to non-volatile storage.",mimi
+Core_01960,US_7.0.1,"The telematics ECU shall support remote log retrieval for diagnostics and debugging.",teetee
+Core_01970,US_7.1,"The telematics ECU shall support A/B partition scheme for safe firmware updates.",mimi
+Core_01980,US_7.1,"The telematics ECU bootloader shall validate firmware image signature before booting.",teetee
+Core_01990,US_7.1,"The telematics ECU shall maintain a persistent update history log (last 10 updates minimum).",mimi
+Core_02000,US_8.0,"The telematics ECU shall support integration with fleet management platforms via REST API.",teetee
+Core_02010,US_8.0,"The telematics ECU shall support Protobuf serialization format for efficient data encoding.",mimi
+Core_02020,US_8.0,"The telematics ECU shall support JSON data format as a fallback for diagnostic and configuration messages.",teetee
+Core_02030,US_8.0.1,"The telematics ECU shall support device provisioning via a secure onboarding protocol.",mimi
+Core_02040,US_8.0.1,"The telematics ECU shall report its hardware and software version to the backend upon connection.",teetee
+Core_02050,US_8.1,"The telematics ECU shall provide a local diagnostic interface via USB for factory testing and configuration.",mimi
+Core_02060,US_8.1,"The telematics ECU shall support SIM card hot-swap without requiring a device reboot.",teetee
+Core_02070,US_8.1,"The telematics ECU shall support eSIM (eUICC) for remote SIM provisioning.",mimi
+Core_02080,US_9.0,"The telematics ECU shall undergo hardware-in-the-loop (HIL) testing for all CAN interface functions.",teetee
+Core_02090,US_9.0,"The telematics ECU shall pass all functional tests defined in the system verification plan before production release.",mimi
+Core_02100,US_9.0,"The telematics ECU software unit tests shall achieve a minimum of 80% code coverage.",teetee
+Core_02110,US_9.0.1,"The telematics ECU shall support automated regression testing via a CI/CD pipeline.",mimi
+Core_02120,US_9.0.1,"The telematics ECU shall pass environmental stress screening (ESS) including thermal cycling and vibration.",teetee
+Core_02130,US_10.0,"The telematics ECU GNSS module shall achieve a cold-start time-to-first-fix (TTFF) of ≤ 35 seconds.",mimi
+Core_02140,US_10.0,"The telematics ECU GNSS module shall achieve a hot-start TTFF of ≤ 2 seconds.",teetee
+Core_02150,US_10.0,"The telematics ECU shall support dead reckoning using IMU data when GNSS signal is lost (e.g., tunnels).",mimi
+Core_02160,US_10.1,"The telematics ECU shall support multi-constellation GNSS (GPS, GLONASS, Galileo, BeiDou).",teetee
+Core_02170,US_10.1,"The telematics ECU shall support assisted GPS (A-GPS) for faster position acquisition.",mimi
+Core_02180,US_10.1,"The telematics ECU shall filter GNSS outliers and apply Kalman filtering for smooth trajectory reporting.",teetee
+Core_02190,US_10.2,"The telematics ECU shall support speed data fusion from GNSS and CAN vehicle speed sensor for improved accuracy.",mimi
+Core_02200,US_10.2,"The telematics ECU shall report heading (bearing) derived from GNSS or IMU data.",teetee
+Core_02210,US_10.2,"The telematics ECU shall report altitude data from GNSS with accuracy ≤ 10 meters.",mimi
