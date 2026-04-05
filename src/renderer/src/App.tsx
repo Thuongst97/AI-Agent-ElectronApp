@@ -79,7 +79,7 @@ export default function App(): JSX.Element {
         )}
 
         {view === 'settings' && (
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-hidden flex justify-center" style={{ background: 'var(--bg-secondary)' }}>
             <SettingsView onClose={() => setView('chat')} />
           </div>
         )}
