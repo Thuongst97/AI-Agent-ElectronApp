@@ -48,8 +48,7 @@ function createWindow(): void {
     minWidth:        800,
     minHeight:       560,
     show:            false,
-    frame:           false,        // custom title bar
-    titleBarStyle:   'hidden',
+    titleBarStyle:   process.platform === 'darwin' ? 'hiddenInset' : 'hidden',
     backgroundColor: '#0f172a',
     webPreferences: {
       preload:          join(__dirname, '../preload/index.js'),

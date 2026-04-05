@@ -163,9 +163,14 @@ export async function registerIpcHandlers(win: BrowserWindow): Promise<void> {
 
   // ── Start async services after handlers are registered ──────────────────
   // Graceful shutdown — stop the CLI subprocess before quitting
-  app.on('before-quit', async () => {
+  app.on('before-quit', (event) => {
     log.info('[Handler] App quitting — stopping Copilot client')
-    await copilot.stop().catch(() => {})
+    event.preventDefault()
+    copilot.stop()
+      .catch(err => log.warn('[Handler] Cleanup error:', err))
+      .finally(() => {
+        app.exit(0)
+      })
   })
 
   // Start the Copilot CLI and probe (fire-and-forget — never blocks handler reg)

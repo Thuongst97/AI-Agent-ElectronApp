@@ -31,8 +31,17 @@ export class CopilotClientService {
 
   /** Gracefully stop the CLI subprocess and all active sessions. */
   async stop(): Promise<void> {
-    await this.client.stop()
-    log.info('[CopilotClientService] Client stopped')
+    try {
+      await this.client.stop()
+      log.info('[CopilotClientService] Client stopped')
+    } catch (err) {
+      // Ignore stream errors during shutdown — the process is exiting anyway
+      if (err instanceof Error && err.message.includes('destroyed')) {
+        log.info('[CopilotClientService] Client already destroyed')
+      } else {
+        log.warn('[CopilotClientService] Stop error (ignoring):', err)
+      }
+    }
   }
 
   // ── Settings hot-reload ───────────────────────────────────────────────────
