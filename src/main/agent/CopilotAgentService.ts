@@ -245,6 +245,9 @@ export class CopilotAgentService {
         excludedTools: EXCLUDED_BUILTIN_TOOLS,
         configDir: join(app.getPath('userData'), 'sdk-sessions'),
         systemMessage: { content: BASE_SYSTEM_PROMPT + SEMANTIC_GATE_ADDENDUM },
+        streaming:    true,
+        model:        this.settings.copilotModel || 'gpt-4o',
+        ...(this.settings.reasoningEffort ? { reasoningEffort: this.settings.reasoningEffort } : {}),
       } as any)
       log.info('[CopilotAgentService] Resumed session %s with %d tools: [%s]',
         conversationId, tools.length, tools.map((t: any) => t.name).join(', '))

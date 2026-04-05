@@ -73,6 +73,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
   // ── Cancel / stop the active agent turn ──────────────────────────────────────────────
   cancelMessage: async () => {
     await window.electronAPI.cancelMessage()
+    // Clear batch state so the next sendMessage starts fresh
+    if (_rafHandle !== null) { cancelAnimationFrame(_rafHandle); _rafHandle = null }
+    _tokenBuffer = ''
+    _flushFn     = null
     const { streamingContent } = get()
     set(s => {
       if (!s.isLoading) return s
@@ -100,6 +104,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   // ── Send a user message ─────────────────────────────────────────────────────
   sendMessage: async (text: string) => {
+    // Always start a new turn with a clean token-batch slate so stale state
+    // from the previous turn (e.g. a late final chunk) never silently breaks
+    // the next response's streaming.
+    if (_rafHandle !== null) { cancelAnimationFrame(_rafHandle); _rafHandle = null }
+    _tokenBuffer = ''
+    _flushFn     = null
+
     const { activeConversationId, newConversation } = get()
     const convId = activeConversationId ?? newConversation()
 
