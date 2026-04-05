@@ -8,16 +8,16 @@ declare const window: Window & { windowControls: WindowControls }
 
 export default function TitleBar(): JSX.Element {
   const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0
-  
+
   return (
-    <div className={`titlebar-drag flex items-center h-9 px-4 bg-[var(--bg-secondary)] border-b select-none ${isMac ? 'justify-center' : 'justify-between'}`} style={{ borderColor: 'var(--border)' }}>
-      {/* App identity - centered on Mac, left on others */}
-      <span className="text-xs font-semibold tracking-wide" style={{ color: 'var(--text-muted)' }}>
+    <div className="titlebar-drag relative flex items-center h-9 px-2 bg-[var(--bg-secondary)] border-b select-none" style={{ borderColor: 'var(--border)' }}>
+      {/* App identity — always centered absolutely, macOS style */}
+      <span className="absolute left-1/2 -translate-x-1/2 text-sm font-semibold tracking-wide pointer-events-none" style={{ color: 'var(--text-muted)' }}>
         🤖 AI Work Assistant
       </span>
 
-      {/* Window controls - only show on Windows/Linux */}
-      {!isMac && <div className="titlebar-no-drag flex items-center gap-1">
+      {/* Window controls — right side, Windows/Linux only */}
+      {!isMac && <div className="titlebar-no-drag flex items-center gap-1 ml-auto">
         <button
           onClick={() => window.windowControls.minimize()}
           className="w-7 h-7 flex items-center justify-center rounded transition-colors text-lg leading-none" style={{ color: 'var(--text-muted)' }}
