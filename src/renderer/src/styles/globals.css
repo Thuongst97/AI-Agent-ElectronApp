@@ -172,6 +172,12 @@
   .input-bar::placeholder { color: var(--text-faint); }
   .input-bar:focus { border-color: var(--accent); }
 
+  /* Themed divider — use on divide-y containers so child borders use --border */
+  .divide-border > :not([hidden]) ~ :not([hidden]) {
+    border-top-width: 1px;
+    border-top-color: var(--border);
+  }
+
   /* Sidebar */
   .sidebar-item {
     color: var(--text-muted);

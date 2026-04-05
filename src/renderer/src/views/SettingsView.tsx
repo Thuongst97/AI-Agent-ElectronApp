@@ -99,7 +99,7 @@ function SkillEditModal({ skillKey, label, icon, defaultInstruction, current, on
       <div
         className="flex flex-col rounded-xl border shadow-2xl"
         style={{
-          width: 540, maxWidth: 'calc(100vw - 48px)',
+          width: 680, maxWidth: 'calc(100vw - 48px)',
           maxHeight: 'calc(100vh - 80px)',
           background: 'var(--bg-primary)',
           borderColor: 'var(--border)',
@@ -130,15 +130,16 @@ function SkillEditModal({ skillKey, label, icon, defaultInstruction, current, on
 
         {/* Textarea */}
         <div className="flex-1 overflow-y-auto px-5 py-4">
-          <label className="block text-[11px] font-medium mb-2" style={{ color: 'var(--text-muted)' }}>
+          <label className="block text-[14px] font-medium mb-2" style={{ color: 'var(--text-muted)', fontFamily: "'Inter', system-ui, sans-serif" }}>
             Instruction — tells the agent how to behave for this skill
           </label>
           <textarea
-            rows={12}
-            className="input-bar text-[12.5px] w-full resize-none"
-            style={{ fontFamily: 'inherit', lineHeight: 1.65 }}
+            rows={18}
+            className="input-bar text-[14px] w-full resize-none"
+            style={{ fontFamily: "'Inter', system-ui, sans-serif", lineHeight: 1.65 }}
             value={draft}
             onChange={e => setDraft(e.target.value)}
+            spellCheck={false}
             autoFocus
           />
           {isCustom && (
@@ -365,8 +366,7 @@ export default function SettingsView({ onClose }: { onClose: () => void }): JSX.
           </div>
 
           {/* Rows */}
-          <div className="divide-y" style={{ borderColor: 'var(--border)' }}>
-            {/* Host row */}
+          <div className="divide-y divide-border">
             <div className="flex items-center justify-between gap-6 px-4 py-3.5">
               <div className="min-w-0">
                 <p className="text-[13px] font-medium" style={{ color: 'var(--text-primary)' }}>Host</p>
@@ -410,8 +410,7 @@ export default function SettingsView({ onClose }: { onClose: () => void }): JSX.
           </div>
 
           {/* Rows */}
-          <div className="divide-y" style={{ borderColor: 'var(--border)' }}>
-            {/* Domain */}
+          <div className="divide-y divide-border">
             <div className="flex items-center justify-between gap-6 px-4 py-3.5">
               <div className="min-w-0">
                 <p className="text-[13px] font-medium" style={{ color: 'var(--text-primary)' }}>Domain</p>
@@ -517,7 +516,7 @@ export default function SettingsView({ onClose }: { onClose: () => void }): JSX.
           </div>
 
           {/* Skill rows */}
-          <div className="divide-y" style={{ borderColor: 'var(--border)' }}>
+          <div className="divide-y divide-border">
             {SKILL_DEFINITIONS.map(skill => {
               const cfg: SkillConfig = form.skills?.[skill.key] ?? { enabled: false, customInstruction: '' }
               const hasCustom = !!cfg.customInstruction
