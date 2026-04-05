@@ -24,6 +24,8 @@ import { approveAll } from '@github/copilot-sdk'
 import type { CopilotSession } from '@github/copilot-sdk'
 import { app } from 'electron'
 import { join } from 'path'
+import { createHash } from 'crypto'
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs'
 import log from 'electron-log'
 import type { ChatChunk, ChatRequest, AppSettings } from '../../shared/ipc-types'
 import type { CopilotClientService } from './CopilotClientService'
@@ -33,16 +35,23 @@ import { BASE_SYSTEM_PROMPT, SEMANTIC_GATE_ADDENDUM } from './prompts'
 // Built-in CLI shell/file tools that must be excluded to prevent the agent from
 // entering infinite execution loops when it tries to run shell commands.
 const EXCLUDED_BUILTIN_TOOLS = [
-  'powershell', 'bash', 'sh', 'cmd',
-  'run_command', 'execute_command', 'shell',
-  'report_intent',
-  'read_file', 'write_file', 'create_file', 'edit_file',
-  'search_files', 'list_directory', 'find_files',
+  // Shell / process execution
+  'powershell', 'write_powershell', 'bash', 'sh', 'cmd',
+  'run_command', 'execute_command', 'shell', 'run_in_terminal',
+  // File system
+  'read_file', 'write_file', 'create_file', 'edit_file', 'view',
+  'search_files', 'list_directory', 'find_files', 'list_dir',
+  // Text search / grep
+  'grep', 'grep_search', 'text_search', 'semantic_search',
+  // Misc SDK built-ins
+  'report_intent', 'web_search', 'browser',
 ]
 
 export class CopilotAgentService {
   private settings: AppSettings
   private toolRegistry: ToolRegistry | null = null
+  private _activeSession: CopilotSession | null = null
+  private _abortRequested = false
 
   constructor(
     private readonly copilotService: CopilotClientService,
@@ -58,8 +67,55 @@ export class CopilotAgentService {
     log.info('[CopilotAgentService] Tool registry set — %d tools registered', registry.getAll().length)
   }
 
+  /**
+   * Compute a fingerprint of the current system prompt + tool names.
+   * If it differs from what's stored on disk, purge all SDK session files so
+   * fresh sessions are created with the current tools and system message.
+   * Call this each time the tool registry is finalised.
+   */
+  purgeStaleSessionsIfNeeded(): void {
+    const configDir = join(app.getPath('userData'), 'sdk-sessions')
+    const toolNames = (this.toolRegistry?.getAll() ?? [])
+      .map((t: any) => t.name as string)
+      .sort()
+      .join(',')
+    const fingerprint = createHash('sha1')
+      .update(BASE_SYSTEM_PROMPT)
+      .update('|')
+      .update(toolNames)
+      .digest('hex')
+      .slice(0, 12)
+
+    const fpFile = join(configDir, '.fingerprint')
+    const stored = existsSync(fpFile) ? readFileSync(fpFile, 'utf-8').trim() : ''
+
+    if (stored !== fingerprint) {
+      log.info('[CopilotAgentService] Config changed (tools/prompt) — purging stale SDK sessions')
+      try {
+        if (existsSync(configDir)) rmSync(configDir, { recursive: true, force: true })
+      } catch (e) {
+        log.warn('[CopilotAgentService] Failed to purge sessions dir:', e)
+      }
+      mkdirSync(configDir, { recursive: true })
+      writeFileSync(fpFile, fingerprint, 'utf-8')
+      log.info('[CopilotAgentService] Sessions purged — new fingerprint: %s (tools: [%s])', fingerprint, toolNames)
+    } else {
+      log.info('[CopilotAgentService] Session fingerprint matches (%s) — no purge needed', fingerprint)
+    }
+  }
+
   updateSettings(settings: AppSettings): void {
     this.settings = settings
+  }
+
+  /** Interrupt the currently running agent turn (if any). */
+  abort(): void {
+    this._abortRequested = true
+    if (this._activeSession) {
+      this._activeSession.disconnect().catch(() => {})
+      this._activeSession = null
+      log.info('[CopilotAgentService] Abort requested — session disconnected')
+    }
   }
 
   // ── Main entry point ───────────────────────────────────────────────────────
@@ -79,7 +135,9 @@ export class CopilotAgentService {
 
     log.info('[CopilotAgentService] chat — conv=%s query="%s"', conversationId, message.slice(0, 60))
 
+    this._abortRequested = false
     const session = await this._getOrCreateSession(conversationId)
+    this._activeSession = session
     let fullReply = ''
 
     // Wire streaming + tool events → IPC ChatChunks
@@ -134,14 +192,22 @@ export class CopilotAgentService {
       onChunk({ type: 'final', content: fullReply })
       log.info('[CopilotAgentService] Turn complete — %d chars', fullReply.length)
     } catch (err) {
-      const raw = String(err)
-      const msg = raw.includes('Personal Access Tokens are not supported')
-        ? 'Authentication error: Personal Access Tokens (ghp_…) are not supported by the Copilot SDK.\n\n'
-          + 'Please use a GitHub OAuth token. Run `gh auth token` in your terminal and paste the result into Settings → GitHub Token.'
-        : `Agent error: ${raw}`
-      onChunk({ type: 'error', content: msg })
-      log.error('[CopilotAgentService] sendAndWait error:', err)
+      if (this._abortRequested) {
+        // User-initiated stop — emit final with whatever was buffered
+        onChunk({ type: 'final', content: fullReply || '' })
+        log.info('[CopilotAgentService] Turn cancelled by user')
+      } else {
+        const raw = String(err)
+        const msg = raw.includes('Personal Access Tokens are not supported')
+          ? 'Authentication error: Personal Access Tokens (ghp_…) are not supported by the Copilot SDK.\n\n'
+            + 'Please use a GitHub OAuth token. Run `gh auth token` in your terminal and paste the result into Settings → GitHub Token.'
+          : `Agent error: ${raw}`
+        onChunk({ type: 'error', content: msg })
+        log.error('[CopilotAgentService] sendAndWait error:', err)
+      }
     } finally {
+      this._activeSession = null
+      this._abortRequested = false
       // Unsubscribe all listeners and disconnect (preserves session on disk)
       unsubs.forEach(fn => fn())
       await session.disconnect().catch(e => log.warn('[CopilotAgentService] disconnect error:', e))
@@ -178,8 +244,10 @@ export class CopilotAgentService {
         tools,
         excludedTools: EXCLUDED_BUILTIN_TOOLS,
         configDir: join(app.getPath('userData'), 'sdk-sessions'),
+        systemMessage: { content: BASE_SYSTEM_PROMPT + SEMANTIC_GATE_ADDENDUM },
       } as any)
-      log.info('[CopilotAgentService] Resumed session %s', conversationId)
+      log.info('[CopilotAgentService] Resumed session %s with %d tools: [%s]',
+        conversationId, tools.length, tools.map((t: any) => t.name).join(', '))
       return session
     } catch {
       // First message for this conversation (or session was deleted)
@@ -190,6 +258,8 @@ export class CopilotAgentService {
 
   private _buildSessionConfig(sessionId: string) {
     const tools   = this.toolRegistry?.getAll() ?? []
+    log.info('[CopilotAgentService] Building session %s with %d tools: [%s]',
+      sessionId, tools.length, tools.map((t: any) => t.name).join(', '))
     // Exclude built-in CLI shell tools — this agent works with the requirements
     // database only; unrestricted shell access causes infinite execution loops.
     const config: Record<string, unknown> = {

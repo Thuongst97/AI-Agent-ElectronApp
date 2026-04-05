@@ -20,6 +20,15 @@ function IconClose(): JSX.Element {
   )
 }
 
+function IconJira(): JSX.Element {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="3" />
+      <path d="M8 12h4m0 0 3-3m-3 3 3 3" />
+    </svg>
+  )
+}
+
 export default function SettingsView({ onClose }: { onClose: () => void }): JSX.Element {
   const { settings, loadSettings, saveSettings } = useSettingsStore()
   const [form, setForm] = useState<AppSettings>(settings)
@@ -44,8 +53,11 @@ export default function SettingsView({ onClose }: { onClose: () => void }): JSX.
   }
 
   const isDirty =
-    form.chromaHost !== settings.chromaHost ||
-    form.chromaPort !== settings.chromaPort
+    form.chromaHost   !== settings.chromaHost  ||
+    form.chromaPort   !== settings.chromaPort  ||
+    form.jiraDomain   !== settings.jiraDomain  ||
+    form.jiraEmail    !== settings.jiraEmail   ||
+    form.jiraToken    !== settings.jiraToken
 
   return (
     <div className="flex flex-col h-full" style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
@@ -110,6 +122,66 @@ export default function SettingsView({ onClose }: { onClose: () => void }): JSX.
                 value={form.chromaPort ?? ''}
                 onChange={e => setForm(f => ({ ...f, chromaPort: Number(e.target.value) }))}
                 placeholder="8000"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Jira Card */}
+        <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}>
+          {/* Card header */}
+          <div className="flex items-center gap-2.5 px-4 py-3 border-b" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+            <span style={{ color: 'var(--accent)' }}><IconJira /></span>
+            <div>
+              <p className="text-[13px] font-medium" style={{ color: 'var(--text-primary)' }}>Jira Integration</p>
+              <p className="text-[11px]" style={{ color: 'var(--text-faint)' }}>Fetch and analyze Jira tickets with the agent</p>
+            </div>
+          </div>
+
+          {/* Rows */}
+          <div className="divide-y" style={{ borderColor: 'var(--border)' }}>
+            {/* Domain */}
+            <div className="flex items-center justify-between gap-6 px-4 py-3.5">
+              <div className="min-w-0">
+                <p className="text-[13px] font-medium" style={{ color: 'var(--text-primary)' }}>Domain</p>
+                <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-faint)' }}>Your Atlassian domain, e.g. mycompany.atlassian.net</p>
+              </div>
+              <input
+                type="text"
+                className="input-bar text-sm py-1.5 w-56 shrink-0"
+                value={form.jiraDomain ?? ''}
+                onChange={e => setForm(f => ({ ...f, jiraDomain: e.target.value }))}
+                placeholder="mycompany.atlassian.net"
+              />
+            </div>
+
+            {/* Email */}
+            <div className="flex items-center justify-between gap-6 px-4 py-3.5">
+              <div className="min-w-0">
+                <p className="text-[13px] font-medium" style={{ color: 'var(--text-primary)' }}>Email</p>
+                <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-faint)' }}>Atlassian account email used to authenticate</p>
+              </div>
+              <input
+                type="email"
+                className="input-bar text-sm py-1.5 w-56 shrink-0"
+                value={form.jiraEmail ?? ''}
+                onChange={e => setForm(f => ({ ...f, jiraEmail: e.target.value }))}
+                placeholder="you@example.com"
+              />
+            </div>
+
+            {/* API Token */}
+            <div className="flex items-center justify-between gap-6 px-4 py-3.5">
+              <div className="min-w-0">
+                <p className="text-[13px] font-medium" style={{ color: 'var(--text-primary)' }}>API Token</p>
+                <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-faint)' }}>Generate at id.atlassian.com → Security → API tokens</p>
+              </div>
+              <input
+                type="password"
+                className="input-bar text-sm py-1.5 w-56 shrink-0"
+                value={form.jiraToken ?? ''}
+                onChange={e => setForm(f => ({ ...f, jiraToken: e.target.value }))}
+                placeholder="ATATT3x…"
               />
             </div>
           </div>

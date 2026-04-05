@@ -1,12 +1,11 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useCallback } from 'react'
 import { useChatStore } from '../store/chatStore'
 import MessageBubble from '../components/MessageBubble'
 import ThinkingIndicator from '../components/ThinkingIndicator'
 import InputBar from '../components/InputBar'
 import ReactMarkdown from 'react-markdown'
-import rehypeHighlight from 'rehype-highlight'
+import { markdownComponents } from '../components/MessageBubble'
 import remarkGfm from 'remark-gfm'
-import type { Message } from '@shared/ipc-types'
 
 const QUICK_PROMPTS: Record<string, string> = {
   'Analyze ticket':     'Please help me analyze a ticket. Describe what information a well-written ticket should contain and what questions to ask when reviewing it.',
@@ -18,27 +17,30 @@ const QUICK_PROMPTS: Record<string, string> = {
 
 export default function ChatView(): JSX.Element {
   const { messages, isThinking, streamingContent } = useChatStore()
-  const bottomRef = useRef<HTMLDivElement>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)   // the scrollable container
 
-  // Auto-scroll to bottom whenever messages or stream changes
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, streamingContent, isThinking])
+  // Always pin to bottom while streaming — set scrollTop directly, no smooth
+  // animation so the view never lags behind incoming tokens.
+  const scrollToBottom = useCallback((smooth = false) => {
+    const el = scrollRef.current
+    if (!el) return
+    if (smooth) {
+      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+    } else {
+      el.scrollTop = el.scrollHeight
+    }
+  }, [])
 
-  // Build a synthetic streaming message to show partial content live
-  const streamingMsg: Message | null = streamingContent
-    ? {
-        id:        '__streaming__',
-        role:      'assistant',
-        content:   streamingContent,
-        createdAt: new Date().toISOString(),
-      }
-    : null
+  // Hard-scroll on every streamed update (RAF-batched in the store, so ≤60×/s)
+  useEffect(() => { scrollToBottom(false) }, [streamingContent, scrollToBottom])
+  // Smooth-scroll when a new committed message appears or thinking starts/stops
+  useEffect(() => { scrollToBottom(true) }, [messages, isThinking, scrollToBottom])
+
 
   return (
     <div className="flex flex-col h-full">
       {/* Messages area — scrollable full-width, content centred */}
-      <div className="flex-1 overflow-y-auto">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto">
         <div className="max-w-5xl mx-auto px-4 pt-6 pb-2">
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center min-h-[60vh] text-center gap-4" style={{ color: 'var(--text-muted)' }}>
@@ -67,16 +69,18 @@ export default function ChatView(): JSX.Element {
             <MessageBubble key={msg.id} message={msg} />
           ))}
 
-          {/* Live streaming message */}
-          {streamingMsg && (
+          {/* Live streaming message — ReactMarkdown without rehypeHighlight.
+               remarkGfm gives tables/bold live; syntax highlighting runs only
+               once on the committed message (no heavy parse per token). */}
+          {streamingContent && (
             <div className="flex justify-start mb-6 gap-3">
               <div className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-sm mt-0.5"
                 style={{ background: 'var(--bg-tertiary)', color: 'var(--accent)' }}>
                 ✦
               </div>
               <div className="flex-1 min-w-0 prose-mimi">
-                <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
-                  {streamingMsg.content}
+                <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                  {streamingContent}
                 </ReactMarkdown>
               </div>
             </div>
@@ -85,7 +89,6 @@ export default function ChatView(): JSX.Element {
           {/* Thinking indicator — shown before first token */}
           {isThinking && <ThinkingIndicator />}
 
-          <div ref={bottomRef} />
         </div>
       </div>
 

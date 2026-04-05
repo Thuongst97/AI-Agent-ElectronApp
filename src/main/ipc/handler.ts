@@ -6,11 +6,13 @@ import {
 } from '../../shared/ipc-types'
 import { SettingsService }          from '../services/SettingsService'
 import { ConversationService }       from '../services/ConversationService'
+import { JiraService }               from '../services/JiraService'
 import { CopilotClientService }      from '../agent/CopilotClientService'
 import { CopilotAgentService }       from '../agent/CopilotAgentService'
 import { VectorMemoryService }       from '../data/VectorMemoryService'
 import { DataIngester }              from '../data/DataIngester'
 import { ToolRegistry }              from '../tools/ToolRegistry'
+import { makeRequirementTools }      from '../tools/requirementTools'
 import log from 'electron-log'
 
 // ── Singletons (created once, shared across all IPC calls) ───────────────────
@@ -20,6 +22,7 @@ let _agent:         CopilotAgentService  | null = null
 let _convService:   ConversationService  | null = null
 let _vectorMemory:  VectorMemoryService  | null = null
 let _ingester:      DataIngester         | null = null
+let _jira:          JiraService          | null = null
 
 /** Cached connection states — updated by probe on startup & settings change. */
 let _llmState:    AppStatus['llm']      = 'disconnected'
@@ -40,6 +43,15 @@ function getServices(settings: SettingsService) {
 export async function registerIpcHandlers(win: BrowserWindow): Promise<void> {
   _settings = new SettingsService()
   const { agent, conv, copilot } = getServices(_settings)
+
+  // Jira service — credentials from settings
+  _jira = new JiraService(_settings.get())
+
+  // ToolRegistry: register Jira tools immediately so agent is ready on first message
+  const registry = new ToolRegistry(_jira)
+  agent.setToolRegistry(registry)
+  agent.purgeStaleSessionsIfNeeded()        // purge any sessions missing Jira tools
+  log.info('[Handler] ToolRegistry created with Jira tools immediately')
 
   // VectorMemory: init (connects to ChromaDB or falls back to Vectra)
   _vectorMemory = new VectorMemoryService()
@@ -64,10 +76,10 @@ export async function registerIpcHandlers(win: BrowserWindow): Promise<void> {
       log.info('[Handler] Collection has %d existing requirements — skipping auto-seed', count)
     }
 
-    // Wire tools into the agent now that the vector store is ready
-    const registry = new ToolRegistry(_vectorMemory!)
-    agent.setToolRegistry(registry)
-    log.info('[Handler] ToolRegistry injected — %d tools active', registry.getAll().length)
+    // Add requirement tools now that VectorMemory is ready
+    registry.addTools(makeRequirementTools(_vectorMemory!))
+    log.info('[Handler] Requirement tools added — total tools: %d', registry.getAll().length)
+    agent.purgeStaleSessionsIfNeeded()      // re-check fingerprint with full tool set
   }).catch(err => {
     _chromaState = 'error'
     log.error('[Handler] VectorMemory init failed:', err)
@@ -105,6 +117,11 @@ export async function registerIpcHandlers(win: BrowserWindow): Promise<void> {
     await agent.reset(conversationId)
   })
 
+  ipcMain.handle(IPC.CHAT_CANCEL, () => {
+    log.info('[IPC] chat:cancel — aborting active turn')
+    agent.abort()
+  })
+
   // ── History ────────────────────────────────────────────────────────────────
   ipcMain.handle(IPC.HISTORY_LIST, async (): Promise<ConversationMeta[]> => {
     return conv.listConversations()
@@ -129,6 +146,8 @@ export async function registerIpcHandlers(win: BrowserWindow): Promise<void> {
     _settings!.set(partial)
     const updated = _settings!.get()
     agent.updateSettings(updated)
+    // Reconfigure Jira credentials if they changed
+    _jira?.reconfigure(updated)
     // Rebuild Copilot client if the token was explicitly changed (including clearing it)
     if (partial.githubToken !== undefined && partial.githubToken !== TOKEN_MASKED) {
       await copilot.updateSettings(updated)

@@ -5,7 +5,7 @@ import { MODEL_GROUPS, modelLabel } from '../constants/models'
 
 export default function InputBar(): JSX.Element {
   const [text, setText] = useState('')
-  const { sendMessage, isLoading } = useChatStore()
+  const { sendMessage, cancelMessage, isLoading } = useChatStore()
   const { settings, saveSettings } = useSettingsStore()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -138,27 +138,37 @@ export default function InputBar(): JSX.Element {
           )}
         </div>
 
-            {/* Send button — right end of toolbar */}
+            {/* Send / Stop button — right end of toolbar */}
             <div className="ml-auto">
-              <button
-                onClick={handleSend}
-                disabled={!text.trim() || isLoading}
-                title="Send (Enter)"
-                className="flex items-center justify-center h-8 w-8 rounded-lg transition-opacity"
-                style={{
-                  background: (!text.trim() || isLoading) ? 'var(--text-faint)' : 'var(--text-primary)',
-                  color: 'var(--bg-primary)',
-                  opacity: (!text.trim() || isLoading) ? 0.4 : 1,
-                }}
-              >
-                {isLoading ? (
-                  <span className="animate-spin text-sm leading-none">⟳</span>
-                ) : (
+              {isLoading ? (
+                <button
+                  onClick={() => cancelMessage()}
+                  title="Stop generation"
+                  className="flex items-center justify-center h-8 w-8 rounded-lg transition-colors"
+                  style={{ background: 'var(--text-primary)', color: 'var(--bg-primary)' }}
+                >
+                  {/* Square stop icon */}
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+                    <rect x="1" y="1" width="8" height="8" rx="1.5"/>
+                  </svg>
+                </button>
+              ) : (
+                <button
+                  onClick={handleSend}
+                  disabled={!text.trim()}
+                  title="Send (Enter)"
+                  className="flex items-center justify-center h-8 w-8 rounded-lg transition-opacity"
+                  style={{
+                    background: !text.trim() ? 'var(--text-faint)' : 'var(--text-primary)',
+                    color: 'var(--bg-primary)',
+                    opacity: !text.trim() ? 0.4 : 1,
+                  }}
+                >
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                     <path d="M2 7H12M12 7L7.5 2.5M12 7L7.5 11.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
-                )}
-              </button>
+                </button>
+              )}
             </div>
 
           </div>{/* end toolbar */}

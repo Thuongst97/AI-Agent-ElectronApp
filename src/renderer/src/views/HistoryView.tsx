@@ -196,7 +196,7 @@ export default function HistoryView({ collapsed, onToggle, onSettings }: Props):
         {/* New chat */}
         <button
           onClick={() => newConversation()}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-xl w-full text-sm text-left transition-colors"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl w-full text-base text-left transition-colors"
           style={{ color: 'var(--text-primary)' }}
           onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')}
           onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
@@ -208,7 +208,7 @@ export default function HistoryView({ collapsed, onToggle, onSettings }: Props):
         {/* My content / history */}
         <button
           onClick={() => setHistoryOpen(v => !v)}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-xl w-full text-sm text-left transition-colors"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl w-full text-base text-left transition-colors"
           style={{ color: 'var(--text-primary)' }}
           onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')}
           onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
@@ -264,7 +264,7 @@ export default function HistoryView({ collapsed, onToggle, onSettings }: Props):
         className="px-2 py-2 flex items-center gap-1"
       >
         <button
-          className="flex items-center gap-3 px-3 py-2 rounded-xl flex-1 text-sm text-left transition-colors"
+          className="flex items-center gap-3 px-3 py-2 rounded-xl flex-1 text-base text-left transition-colors"
           style={{ color: 'var(--text-muted)' }}
           onClick={onSettings}
           title="Settings (Ctrl+,)"

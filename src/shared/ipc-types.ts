@@ -9,6 +9,7 @@ export const IPC = {
   CHAT_SEND:       'chat:send',       // invoke(ChatRequest)  → void (streams via CHAT_CHUNK)
   CHAT_CHUNK:      'chat:chunk',      // on     → ChatChunk
   CHAT_RESET:      'chat:reset',      // invoke()             → void
+  CHAT_CANCEL:     'chat:cancel',     // invoke()             → void (abort current turn)
 
   // Conversation history
   HISTORY_LIST:    'history:list',    // invoke()             → ConversationMeta[]
@@ -86,6 +87,10 @@ export interface AppSettings {
   chromaPort:      number
   theme:           'light' | 'dark' | 'system'
   logLevel:        'debug' | 'info' | 'warn' | 'error'
+  // Jira integration
+  jiraDomain:      string   // e.g. "mycompany.atlassian.net"
+  jiraEmail:       string
+  jiraToken:       string
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -96,6 +101,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
   chromaPort:      8000,
   theme:           'system',
   logLevel:        'info',
+  jiraDomain:      '',
+  jiraEmail:       '',
+  jiraToken:       '',
 }
 
 // ── Data ingest ───────────────────────────────────────────────────────────────
@@ -123,9 +131,10 @@ export interface AppStatus {
 
 export interface ElectronAPI {
   // Chat
-  sendMessage: (req: ChatRequest) => Promise<void>
-  onChatChunk: (cb: (chunk: ChatChunk) => void) => () => void
-  resetChat:   (conversationId: string) => Promise<void>
+  sendMessage:   (req: ChatRequest) => Promise<void>
+  onChatChunk:   (cb: (chunk: ChatChunk) => void) => () => void
+  resetChat:     (conversationId: string) => Promise<void>
+  cancelMessage: () => Promise<void>
 
   // History
   listHistory:   ()              => Promise<ConversationMeta[]>

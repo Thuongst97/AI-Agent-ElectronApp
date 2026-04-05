@@ -34,6 +34,9 @@ const api: ElectronAPI = {
   resetChat: (conversationId: string) =>
     ipcRenderer.invoke(IPC.CHAT_RESET, conversationId),
 
+  cancelMessage: () =>
+    ipcRenderer.invoke(IPC.CHAT_CANCEL),
+
   // ── History ───────────────────────────────────────────────────────────────
   listHistory: (): Promise<ConversationMeta[]> =>
     ipcRenderer.invoke(IPC.HISTORY_LIST),

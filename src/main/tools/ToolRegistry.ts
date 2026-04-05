@@ -2,26 +2,37 @@
  * ToolRegistry — aggregates all tools for injection into CopilotAgentService.
  *
  * Usage:
- *   const registry = new ToolRegistry(vectorMemory)
+ *   const registry = new ToolRegistry(jira)          // immediate — Jira tools ready now
  *   agentService.setToolRegistry(registry)
+ *   // ... later, once VectorMemory is ready:
+ *   registry.addTools(makeRequirementTools(memory))
  *
  * Tools are GitHub Copilot SDK `Tool` objects created via `defineTool()`.
- * The registry's `getAll()` output is passed to `client.createSession({ tools })`.
+ * The registry's `getAll()` output is passed whenever a new session is created.
  */
 
 import type { Tool }              from '@github/copilot-sdk'
-import type { VectorMemoryService } from '../data/VectorMemoryService'
-import { makeRequirementTools }   from './requirementTools'
+import type { JiraService }         from '../services/JiraService'
+import { makeJiraTools }          from './jiraTools'
 import log from 'electron-log'
 
 export class ToolRegistry {
-  private readonly tools: Tool[]
+  private tools: Tool[]
 
-  constructor(memory: VectorMemoryService) {
-    this.tools = makeRequirementTools(memory)
-    for (const t of this.tools) {
-      log.info('[ToolRegistry] Registered tool: %s', (t as any).name ?? t)
+  constructor(jira: JiraService) {
+    this.tools = [
+      ...makeJiraTools(jira),
+    ]
+    log.info('[ToolRegistry] Created with %d Jira tool(s)', this.tools.length)
+  }
+
+  /** Add more tools (e.g. requirement tools once VectorMemory is ready). */
+  addTools(newTools: Tool[]): void {
+    this.tools = [...this.tools, ...newTools]
+    for (const t of newTools) {
+      log.info('[ToolRegistry] Added tool: %s', (t as any).name ?? t)
     }
+    log.info('[ToolRegistry] Total tools: %d', this.tools.length)
   }
 
   /** Return all registered tools — pass directly to createSession({ tools }). */

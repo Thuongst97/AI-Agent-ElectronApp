@@ -2,6 +2,24 @@ import { create } from 'zustand'
 import { Message, ConversationMeta, ChatChunk } from '@shared/ipc-types'
 import { nanoid } from 'nanoid'
 
+// ── Token batching — accumulate tokens and flush once per animation frame ────
+// Calling set() on every token triggers a full React re-render; batching
+// reduces it to ~60 renders/sec regardless of how fast tokens arrive.
+let _tokenBuffer  = ''
+let _rafHandle:   number | null = null
+let _flushFn:     (() => void) | null = null
+
+function scheduleFlush(): void {
+  if (_rafHandle !== null) return
+  _rafHandle = requestAnimationFrame(() => {
+    _rafHandle = null
+    if (_flushFn && _tokenBuffer) {
+      _flushFn()
+      _tokenBuffer = ''
+    }
+  })
+}
+
 interface ChatState {
   // Conversations
   conversations:       ConversationMeta[]
@@ -19,6 +37,7 @@ interface ChatState {
   newConversation: ()                                   => string
   setActiveConversation: (id: string)                   => Promise<void>
   sendMessage: (text: string)                          => Promise<void>
+  cancelMessage: ()                                    => Promise<void>
   appendChunk: (chunk: ChatChunk)                      => void
   loadHistory: ()                                       => Promise<void>
   deleteConversation: (id: string)                     => Promise<void>
@@ -34,6 +53,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   // ── Create a new blank conversation ────────────────────────────────────────
   newConversation: () => {
+    // Reset token batch state for the new conversation
+    _tokenBuffer = ''
+    _flushFn     = null
+    if (_rafHandle !== null) { cancelAnimationFrame(_rafHandle); _rafHandle = null }
     const id = nanoid()
     set({
       activeConversationId: id,
@@ -45,6 +68,28 @@ export const useChatStore = create<ChatState>((set, get) => ({
     // Refresh sidebar so the just-finished conversation appears immediately
     window.electronAPI.listHistory().then(conversations => set({ conversations })).catch(() => {})
     return id
+  },
+
+  // ── Cancel / stop the active agent turn ──────────────────────────────────────────────
+  cancelMessage: async () => {
+    await window.electronAPI.cancelMessage()
+    const { streamingContent } = get()
+    set(s => {
+      if (!s.isLoading) return s
+      const partialMsg: Message = {
+        id:        `${Date.now()}-assistant`,
+        role:      'assistant',
+        content:   streamingContent ? `${streamingContent}\n\n*[Stopped]*` : '*[Stopped]*',
+        createdAt: new Date().toISOString(),
+      }
+      return {
+        ...s,
+        messages:         [...s.messages, partialMsg],
+        isLoading:        false,
+        isThinking:       false,
+        streamingContent: '',
+      }
+    })
   },
 
   // ── Load an existing conversation from history ──────────────────────────────
@@ -113,10 +158,19 @@ export const useChatStore = create<ChatState>((set, get) => ({
   // ── Handle a streamed chunk ─────────────────────────────────────────────────
   appendChunk: (chunk: ChatChunk) => {
     if (chunk.type === 'token') {
-      set(s => ({
-        isThinking:       false,
-        streamingContent: s.streamingContent + chunk.content,
-      }))
+      // Register flush function once
+      if (!_flushFn) {
+        _flushFn = () => {
+          const captured = _tokenBuffer
+          set(s => ({
+            isThinking:       false,
+            streamingContent: s.streamingContent + captured,
+          }))
+        }
+      }
+      _tokenBuffer += chunk.content
+      scheduleFlush()
+      return
     }
 
     if (chunk.type === 'tool_call') {
@@ -131,6 +185,17 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
 
     if (chunk.type === 'final' || chunk.type === 'error') {
+      // Flush any buffered tokens before committing the final message
+      if (_rafHandle !== null) {
+        cancelAnimationFrame(_rafHandle)
+        _rafHandle = null
+      }
+      if (_tokenBuffer) {
+        set(s => ({ streamingContent: s.streamingContent + _tokenBuffer }))
+        _tokenBuffer = ''
+      }
+      _flushFn = null
+
       const { streamingContent } = get()
       // Use streamingContent if tokens streamed in real-time; fall back to
       // chunk.content (= fullReply from agent) when no delta events fired.

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import ReactMarkdown from 'react-markdown'
 import rehypeHighlight from 'rehype-highlight'
 import remarkGfm from 'remark-gfm'
@@ -38,11 +38,13 @@ function CopyButton({ text }: { text: string }): JSX.Element {
   )
 }
 
-const markdownComponents: Components = {
+export const markdownComponents: Components = {
   code({ className, children, ...props }) {
-    const isBlock = className?.startsWith('language-')
-    const lang = className?.replace('language-', '') ?? ''
     const text = String(children).replace(/\n$/, '')
+    // treat as block if a language is tagged OR the content spans multiple lines
+    // (covers language-less fences used for ASCII art / plain diagrams)
+    const isBlock = !!className?.startsWith('language-') || text.includes('\n')
+    const lang = className?.replace('language-', '') ?? ''
     if (isBlock) {
       return (
         <div className="code-block">
@@ -58,7 +60,43 @@ const markdownComponents: Components = {
   },
 }
 
-export default function MessageBubble({ message }: Props): JSX.Element {
+// ── User bubble with expand/collapse for long messages ───────────────────────
+
+const COLLAPSE_THRESHOLD = 180 // chars — messages longer than this collapse by default
+
+function UserBubble({ message }: { message: Message }): JSX.Element {
+  const isLong = message.content.length > COLLAPSE_THRESHOLD
+  const [expanded, setExpanded] = useState(false)
+
+  const displayed = isLong && !expanded
+    ? message.content.slice(0, COLLAPSE_THRESHOLD).trimEnd() + '…'
+    : message.content
+
+  return (
+    <div className="group flex justify-end mb-5">
+      <div className="flex flex-col items-end gap-1" style={{ minWidth: '50%', maxWidth: '88%' }}>
+        <div className="bubble-user w-full">
+          <p className="m-0 whitespace-pre-wrap leading-relaxed">{displayed}</p>
+          {isLong && (
+            <button
+              onClick={() => setExpanded(e => !e)}
+              className="mt-1.5 text-[11px] font-semibold transition-opacity hover:opacity-80"
+              style={{ color: 'var(--accent)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+            >
+              {expanded ? '▲ Show less' : '▼ Show more'}
+            </button>
+          )}
+        </div>
+        <time className="text-[11px] opacity-0 group-hover:opacity-40 transition-opacity pr-1"
+          style={{ color: 'var(--text-muted)' }}>
+          {new Date(message.createdAt).toLocaleTimeString()}
+        </time>
+      </div>
+    </div>
+  )
+}
+
+const MessageBubble = memo(function MessageBubble({ message }: Props): JSX.Element {
   if (message.role === 'tool') {
     return <ToolCallBadge message={message} />
   }
@@ -66,19 +104,7 @@ export default function MessageBubble({ message }: Props): JSX.Element {
   const isUser = message.role === 'user'
 
   if (isUser) {
-    return (
-      <div className="group flex justify-end mb-5">
-        <div className="flex flex-col items-end gap-1">
-          <div className="bubble-user">
-            <p className="m-0 whitespace-pre-wrap leading-relaxed">{message.content}</p>
-          </div>
-          <time className="text-[11px] opacity-0 group-hover:opacity-40 transition-opacity pr-1"
-            style={{ color: 'var(--text-muted)' }}>
-            {new Date(message.createdAt).toLocaleTimeString()}
-          </time>
-        </div>
-      </div>
-    )
+    return <UserBubble message={message} />
   }
 
   return (
@@ -104,4 +130,6 @@ export default function MessageBubble({ message }: Props): JSX.Element {
       </div>
     </div>
   )
-}
+})
+
+export default MessageBubble

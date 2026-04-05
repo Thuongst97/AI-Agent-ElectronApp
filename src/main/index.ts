@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell, ipcMain } from 'electron'
+import { app, BrowserWindow, shell, ipcMain, Menu } from 'electron'
 import { join } from 'path'
 import { execSync } from 'child_process'
 import { config as loadDotenv } from 'dotenv'
@@ -74,6 +74,18 @@ function createWindow(): void {
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url)
     return { action: 'deny' }
+  })
+
+  // Right-click context menu — copy / paste / select all
+  mainWindow.webContents.on('context-menu', (_e, params) => {
+    const menu = Menu.buildFromTemplate([
+      { label: 'Cut',        role: 'cut',       enabled: params.editFlags.canCut },
+      { label: 'Copy',       role: 'copy',      enabled: params.editFlags.canCopy },
+      { label: 'Paste',      role: 'paste',     enabled: params.editFlags.canPaste },
+      { type: 'separator' },
+      { label: 'Select All', role: 'selectAll', enabled: params.editFlags.canSelectAll },
+    ])
+    menu.popup({ window: mainWindow! })
   })
 
   // Load the app
