@@ -11,7 +11,7 @@ export default function TitleBar(): JSX.Element {
     <div className="titlebar-drag flex items-center justify-between h-9 px-4 bg-[var(--bg-secondary)] border-b select-none" style={{ borderColor: 'var(--border)' }}>
       {/* App identity */}
       <span className="text-xs font-semibold tracking-wide" style={{ color: 'var(--text-muted)' }}>
-        🤖 AI Agent
+        🤖 AI Work Assistant
       </span>
 
       {/* Window controls */}
