@@ -99,7 +99,7 @@ function QuickPrompt({ text, prompt }: { text: string; prompt: string }): JSX.El
   const { sendMessage } = useChatStore()
   return (
     <button
-      className="text-xs text-left rounded-lg px-3 py-2 transition-colors"
+      className="text-sm font-semibold text-left rounded-lg px-3 py-2 transition-colors"
       style={{
         background: 'var(--surface)',
         border: '1px solid var(--border)',

@@ -181,7 +181,6 @@ export default function HistoryView({ collapsed, onToggle, onSettings }: Props):
       {/* ── Top header row: hamburger | spacer | search ── */}
       <div
         className="flex items-center px-3 py-2 gap-1"
-        style={{ borderBottom: '1px solid var(--border)' }}
       >
         <IconBtn onClick={onToggle} title="Collapse sidebar">
           <IconMenu />
@@ -263,7 +262,6 @@ export default function HistoryView({ collapsed, onToggle, onSettings }: Props):
       {/* ── Bottom: settings + theme toggle ── */}
       <div
         className="px-2 py-2 flex items-center gap-1"
-        style={{ borderTop: '1px solid var(--border)' }}
       >
         <button
           className="flex items-center gap-3 px-3 py-2 rounded-xl flex-1 text-sm text-left transition-colors"
