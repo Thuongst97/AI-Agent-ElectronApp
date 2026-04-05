@@ -5,6 +5,9 @@ import HistoryView from './views/HistoryView'
 import SettingsView from './views/SettingsView'
 import { useChatStore } from './store/chatStore'
 import { useSettingsStore } from './store/settingsStore'
+import hljsDarkUrl from 'highlight.js/styles/atom-one-dark.css?url'
+import hljsLightUrl from 'highlight.js/styles/atom-one-light.css?url'
+import hljsSystemUrl from 'highlight.js/styles/tokyo-night-dark.css?url'
 
 type ActiveView = 'chat' | 'settings'
 
@@ -18,12 +21,20 @@ export default function App(): JSX.Element {
   useEffect(() => {
     const root = document.documentElement
     const pref = settings.theme
-    if (pref === 'system') {
-      const sys = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
-      root.setAttribute('data-theme', sys)
-    } else {
-      root.setAttribute('data-theme', pref)
+    root.setAttribute('data-theme', pref)
+
+    // Swap highlight.js CSS theme to match active theme
+    const hljsId = 'hljs-theme'
+    let link = document.getElementById(hljsId) as HTMLLinkElement | null
+    if (!link) {
+      link = document.createElement('link')
+      link.id = hljsId
+      link.rel = 'stylesheet'
+      document.head.appendChild(link)
     }
+    if (pref === 'light') link.href = hljsLightUrl
+    else if (pref === 'system') link.href = hljsSystemUrl
+    else link.href = hljsDarkUrl
   }, [settings.theme])
 
   // Bootstrap on mount

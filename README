@@ -1,0 +1,86 @@
+# Mimi — AI Agent Desktop App
+
+A desktop AI assistant built on **Electron + React + TypeScript**, powered by **GitHub Copilot** models.
+Mimi helps engineering teams analyze tickets, review commits, generate test cases, write weekly reports, and query internal knowledge stored in a local vector database.
+
+---
+
+## Features
+
+- **Chat interface** — streaming responses with full Markdown & code-block rendering
+- **GitHub Copilot backend** — supports GPT-4o, GPT-4o Mini, o1, o3 and custom models
+- **RAG / Vector memory** — ChromaDB stores and retrieves project requirements & documents
+- **Tool use** — agent calls specialized tools (requirement lookup, ticket analysis, etc.)
+- **Conversation history** — persisted sessions with sidebar navigation
+- **Three themes** — Dark (Claude-style), Light (Gemini-style), System (deep ocean blue)
+- **Quick prompts** — one-click starters for common engineering tasks
+
+---
+
+## Prerequisites
+
+| Requirement           | Version                                         |
+| --------------------- | ----------------------------------------------- |
+| Node.js               | ≥ 18                                            |
+| npm                   | ≥ 9                                             |
+| ChromaDB              | running on `localhost:8000` (optional, for RAG) |
+| GitHub Copilot access | valid token / OAuth                             |
+
+---
+
+## Development
+
+```bash
+# Install dependencies
+npm install
+
+# Start in dev mode (hot-reload)
+npm run dev
+```
+
+---
+
+## Build
+
+```bash
+# Compile only (outputs to out/)
+npm run build
+
+# Package for current OS
+npm run package
+
+# Package for specific platform
+npm run package:win     # Windows (.exe installer)
+npm run package:mac     # macOS (.dmg)
+npm run package:linux   # Linux (.AppImage)
+```
+
+Built artifacts are placed in the `dist/` folder.
+
+---
+
+## Project Structure
+
+```
+src/
+  main/           # Electron main process
+    agent/        # Copilot agent & client services
+    data/         # Vector DB ingestion & memory
+    ipc/          # IPC handlers
+    services/     # Settings, conversation persistence
+    tools/        # Agent tool definitions
+  preload/        # Context bridge
+  renderer/       # React UI (Vite)
+    views/        # ChatView, HistoryView, SettingsView
+    components/   # MessageBubble, InputBar, StatusBar …
+    store/        # Zustand state (chat, settings)
+    styles/       # Tailwind + CSS custom properties
+  shared/         # Shared IPC types
+```
+
+---
+
+## Configuration
+
+Open **Settings** (gear icon in the sidebar) to configure the ChromaDB host and port.
+Model and theme can be changed directly from the sidebar menu bar.

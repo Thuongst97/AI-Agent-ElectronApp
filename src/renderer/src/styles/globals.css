@@ -3,55 +3,90 @@
 @tailwind utilities;
 
 @layer base {
-  /* ── Dark theme (default) ─────────────────────────────────────────────── */
+  /* ── Dark theme (Claude-inspired) ───────────────────────────────────── */
   :root,
   [data-theme="dark"] {
     color-scheme: dark;
-    --bg-primary:        #0f172a;
-    --bg-secondary:      #1e293b;
-    --bg-tertiary:       #253352;
-    --surface:           #1e293b;
-    --surface-hover:     #293548;
-    --text-primary:      #f1f5f9;
-    --text-muted:        #94a3b8;
-    --text-faint:        #475569;
-    --border:            #334155;
-    --accent:            #3b82f6;
-    --accent-hover:      #2563eb;
+    --bg-primary:        #212121;
+    --bg-secondary:      #171717;
+    --bg-tertiary:       #2f2f2f;
+    --surface:           #2f2f2f;
+    --surface-hover:     #3a3a3a;
+    --text-primary:      #ececec;
+    --text-muted:        #9b9b9b;
+    --text-faint:        #5a5a5a;
+    --border:            #383838;
+    --accent:            #4f8ef7;
+    --accent-hover:      #3b7ef4;
     --error:             #f87171;
     --success:           #34d399;
     --tool-bg:           #1a2744;
-    --code-bg:           #0f172a;
-    --code-inline:       #334155;
-    --table-border:      #475569;
-    --table-header-bg:   #334155;
-    --table-header-text: #94a3b8;
-    --scrollbar-thumb:   #475569;
+    --code-bg:           #1e1e1e;
+    --code-inline:       #2f2f2f;
+    --table-border:      #3a3a3a;
+    --table-header-bg:   #2a2a2a;
+    --table-header-text: #9b9b9b;
+    --scrollbar-thumb:   #4a4a4a;
+    --sidebar-active:    #2f2f2f;
+    --sidebar-icon:      #8e8e8e;
+    --user-bubble-bg:    #303030;
+    --user-bubble-text:  #ebebeb;
   }
-
-  /* ── Light theme ──────────────────────────────────────────────────────── */
+  /* ── System theme (deep ocean blue) ──────────────────────────────────── */
+  [data-theme="system"] {
+    color-scheme: dark;
+    --bg-primary:        #0a0f1e;
+    --bg-secondary:      #0d1424;
+    --bg-tertiary:       #111c33;
+    --surface:           #111c33;
+    --surface-hover:     #182340;
+    --text-primary:      #ccd9f0;
+    --text-muted:        #6882a8;
+    --text-faint:        #3a4f6e;
+    --border:            #1e2f4a;
+    --accent:            #3b82f6;
+    --accent-hover:      #2563eb;
+    --error:             #f87171;
+    --success:           #4ade80;
+    --tool-bg:           #0e1a30;
+    --code-bg:           #080e1a;
+    --code-inline:       #111c33;
+    --table-border:      #1e2f4a;
+    --table-header-bg:   #0d1a30;
+    --table-header-text: #6882a8;
+    --scrollbar-thumb:   #253550;
+    --sidebar-active:    #162038;
+    --sidebar-icon:      #6882a8;
+    --user-bubble-bg:    #162038;
+    --user-bubble-text:  #bacce8;
+  }
+  /* ── Light theme (Gemini-inspired) ───────────────────────────────────── */
   [data-theme="light"] {
     color-scheme: light;
-    --bg-primary:        #f1f5f9;
-    --bg-secondary:      #ffffff;
-    --bg-tertiary:       #e2e8f0;
+    --bg-primary:        #ffffff;
+    --bg-secondary:      #f0f4f9;
+    --bg-tertiary:       #e2e8f3;
     --surface:           #ffffff;
-    --surface-hover:     #f1f5f9;
-    --text-primary:      #0f172a;
-    --text-muted:        #64748b;
-    --text-faint:        #94a3b8;
-    --border:            #cbd5e1;
-    --accent:            #2563eb;
-    --accent-hover:      #1d4ed8;
-    --error:             #dc2626;
-    --success:           #16a34a;
-    --tool-bg:           #dbeafe;
-    --code-bg:           #f8fafc;
-    --code-inline:       #e2e8f0;
-    --table-border:      #cbd5e1;
-    --table-header-bg:   #e2e8f0;
-    --table-header-text: #475569;
-    --scrollbar-thumb:   #94a3b8;
+    --surface-hover:     #e8edf5;
+    --text-primary:      #1f1f1f;
+    --text-muted:        #5f6368;
+    --text-faint:        #adb5bd;
+    --border:            #dde3ea;
+    --accent:            #1a73e8;
+    --accent-hover:      #1558b0;
+    --error:             #d93025;
+    --success:           #1e8e3e;
+    --tool-bg:           #e8f0fe;
+    --code-bg:           #f8f9fa;
+    --code-inline:       #e8edf5;
+    --table-border:      #dde3ea;
+    --table-header-bg:   #f0f4f9;
+    --table-header-text: #5f6368;
+    --scrollbar-thumb:   #c4cdd6;
+    --sidebar-active:    #dde8fa;
+    --sidebar-icon:      #5f6368;
+    --user-bubble-bg:    #e8edf5;
+    --user-bubble-text:  #1f1f1f;
   }
 
   * { box-sizing: border-box; }
@@ -84,7 +119,15 @@
 
   /* Message bubbles */
   .bubble-user {
-    @apply bg-brand-600 text-white rounded-2xl rounded-br-sm px-4 py-2.5 max-w-[75%] self-end;
+    background: var(--user-bubble-bg);
+    color: var(--user-bubble-text);
+    border-radius: 18px 18px 4px 18px;
+    padding: 10px 16px;
+    max-width: 72%;
+    font-size: 14px;
+    line-height: 1.65;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+    word-break: break-word;
   }
   .bubble-assistant {
     background: var(--surface);
@@ -130,7 +173,7 @@
   /* Sidebar */
   .sidebar-item {
     color: var(--text-muted);
-    @apply flex items-center gap-2 px-3 py-1.5 rounded-lg
+    @apply flex items-center gap-2 px-3 py-2 rounded-lg
            cursor-pointer text-sm transition-colors;
   }
   .sidebar-item:hover {
@@ -138,8 +181,9 @@
     color: var(--text-primary);
   }
   .sidebar-item.active {
-    background: var(--surface-hover);
-    color: var(--text-primary);
+    background: var(--sidebar-active);
+    color: var(--accent);
+    font-weight: 500;
   }
 
   /* Buttons */
@@ -165,30 +209,225 @@
   .status-dot.disconnected { background: var(--text-faint); }
   .status-dot.error        { background: var(--error); }
 
-  /* Code / table inside markdown */
-  .prose-mimi pre {
-    background: var(--code-bg);
-    color: var(--text-primary);
-    @apply rounded-lg p-3 overflow-x-auto text-xs font-mono my-2;
+  /* ── Highlight.js: transparent bg so our container shows, no line banding ── */
+  .hljs {
+    background: transparent !important;
+    padding: 0 !important;
   }
+  /* kill any per-token background that some themes add */
+  .hljs span { background: transparent !important; }
+  [data-theme="light"]  .hljs { color: #383a42; }
+  [data-theme="system"] .hljs { color: #ccd9f0; }
+
+  /* ── Assistant prose ────────────────────────────────────── */
+  .prose-mimi {
+    color: var(--text-primary);
+    line-height: 1.75;
+    font-size: 14px;
+    word-break: break-word;
+  }
+
+  /* Headings */
+  .prose-mimi h1 {
+    font-size: 1.45em;
+    font-weight: 700;
+    margin: 1.2em 0 0.5em;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.3em;
+    line-height: 1.3;
+  }
+  .prose-mimi h2 {
+    font-size: 1.2em;
+    font-weight: 600;
+    margin: 1.1em 0 0.4em;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.25em;
+    line-height: 1.35;
+  }
+  .prose-mimi h3 {
+    font-size: 1.05em;
+    font-weight: 600;
+    margin: 1em 0 0.35em;
+    color: var(--text-primary);
+  }
+  .prose-mimi h4 {
+    font-size: 0.95em;
+    font-weight: 600;
+    margin: 0.8em 0 0.3em;
+    color: var(--text-muted);
+  }
+
+  /* Paragraphs */
+  .prose-mimi p {
+    margin: 0 0 0.85em;
+    line-height: 1.75;
+  }
+  .prose-mimi p:last-child { margin-bottom: 0; }
+
+  /* Lists */
+  .prose-mimi ul {
+    list-style: disc;
+    padding-left: 1.5em;
+    margin: 0 0 0.85em;
+  }
+  .prose-mimi ol {
+    list-style: decimal;
+    padding-left: 1.5em;
+    margin: 0 0 0.85em;
+  }
+  .prose-mimi li {
+    margin-bottom: 0.35em;
+    line-height: 1.7;
+  }
+  .prose-mimi li > ul,
+  .prose-mimi li > ol {
+    margin-top: 0.25em;
+    margin-bottom: 0.25em;
+  }
+
+  /* Horizontal rule */
+  .prose-mimi hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 1.2em 0;
+  }
+
+  /* Blockquote */
+  .prose-mimi blockquote {
+    border-left: 3px solid var(--accent);
+    padding: 0.4em 0.9em;
+    margin: 0.8em 0;
+    background: var(--bg-tertiary);
+    border-radius: 0 6px 6px 0;
+    color: var(--text-muted);
+    font-style: italic;
+  }
+  .prose-mimi blockquote p { margin: 0; }
+
+  /* Inline code — Claude-style: subtle tint, no heavy border */
+  .prose-mimi .inline-code,
   .prose-mimi code:not(pre code) {
-    background: var(--code-inline);
-    color: var(--text-primary);
-    @apply rounded px-1 py-0.5 text-xs font-mono;
+    background: rgba(99, 152, 255, 0.1);
+    color: var(--accent);
+    font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
+    font-size: 0.83em;
+    padding: 0.15em 0.42em;
+    border-radius: 5px;
+    font-style: normal;
+    font-weight: 450;
+    letter-spacing: 0.01em;
   }
+  [data-theme="light"] .prose-mimi .inline-code,
+  [data-theme="light"] .prose-mimi code:not(pre code) {
+    background: rgba(26, 115, 232, 0.08);
+    color: var(--accent);
+  }
+
+  /* Code block wrapper — Claude-style clean card */
+  .prose-mimi .code-block {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 1em 0;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+  }
+  .prose-mimi .code-block-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px;
+    background: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border);
+    min-height: 36px;
+  }
+  .prose-mimi .code-lang {
+    font-size: 11.5px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    font-family: ui-monospace, monospace;
+    text-transform: lowercase;
+  }
+  .copy-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    background: transparent;
+    border: 1px solid transparent;
+    cursor: pointer;
+    padding: 3px 8px;
+    border-radius: 6px;
+    transition: all 150ms;
+    font-family: inherit;
+  }
+  .copy-btn:hover {
+    background: var(--surface-hover);
+    border-color: var(--border);
+    color: var(--text-primary);
+  }
+  .prose-mimi .code-block pre {
+    margin: 0;
+    padding: 16px 18px;
+    overflow-x: auto;
+    background: transparent;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text-primary);
+  }
+  .prose-mimi .code-block pre code {
+    background: transparent !important;
+    color: inherit;
+    padding: 0;
+    font-size: inherit;
+    border-radius: 0;
+  }
+
+  /* Table */
   .prose-mimi table {
-    @apply w-full border-collapse text-xs my-2;
-  }
-  .prose-mimi th, .prose-mimi td {
-    border-color: var(--table-border);
-    color: var(--text-primary);
-    @apply border px-2 py-1 text-left;
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin: 0.8em 0 1em;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--table-border);
   }
   .prose-mimi th {
     background: var(--table-header-bg);
     color: var(--table-header-text);
-    @apply font-semibold;
+    font-weight: 600;
+    text-align: left;
+    padding: 8px 14px;
+    border-bottom: 2px solid var(--table-border);
   }
+  .prose-mimi td {
+    padding: 7px 14px;
+    border-bottom: 1px solid var(--table-border);
+    color: var(--text-primary);
+    vertical-align: top;
+  }
+  .prose-mimi tr:last-child td { border-bottom: none; }
+  .prose-mimi tbody tr:hover td { background: var(--surface-hover); }
+
+  /* Links */
+  .prose-mimi a {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-color: transparent;
+    transition: text-decoration-color 150ms;
+  }
+  .prose-mimi a:hover { text-decoration-color: var(--accent); }
+
+  /* Strong / em */
+  .prose-mimi strong { font-weight: 700; color: var(--text-primary); }
+  .prose-mimi em { font-style: italic; color: var(--text-muted); }
 
   /* Thinking pulse */
   .thinking-dot {
@@ -203,3 +442,14 @@
   0%, 100% { opacity: 0.3; transform: scale(0.8); }
   50%       { opacity: 1;   transform: scale(1);   }
 }
+
+/* ── Highlight.js background reset (outside @layer to beat linked stylesheet) ── */
+.hljs,
+.hljs *,
+pre .hljs,
+pre code.hljs {
+  background: transparent !important;
+  padding: 0 !important;
+}
+[data-theme="light"]  .hljs { color: #383a42; }
+[data-theme="system"] .hljs { color: #ccd9f0; }

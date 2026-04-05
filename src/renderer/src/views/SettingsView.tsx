@@ -1,7 +1,24 @@
 import { useState, useEffect } from 'react'
 import { useSettingsStore } from '../store/settingsStore'
 import type { AppSettings } from '@shared/ipc-types'
-import { MODEL_GROUPS, ALL_KNOWN_VALUES, CUSTOM_SENTINEL, REASONING_MODELS } from '../constants/models'
+
+function IconDatabase(): JSX.Element {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <ellipse cx="12" cy="5" rx="9" ry="3" />
+      <path d="M21 12c0 1.66-4.03 3-9 3S3 13.66 3 12" />
+      <path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5" />
+    </svg>
+  )
+}
+
+function IconClose(): JSX.Element {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <path d="M18 6 6 18M6 6l12 12" />
+    </svg>
+  )
+}
 
 export default function SettingsView({ onClose }: { onClose: () => void }): JSX.Element {
   const { settings, loadSettings, saveSettings } = useSettingsStore()
@@ -9,17 +26,9 @@ export default function SettingsView({ onClose }: { onClose: () => void }): JSX.
   const [saved, setSaved] = useState(false)
   const [saveError, setSaveError] = useState('')
 
-  // Track whether the current model value is a custom (not in the known list)
-  const [customModel, setCustomModel] = useState(
-    !ALL_KNOWN_VALUES.includes(settings.copilotModel ?? '') ? (settings.copilotModel ?? '') : ''
-  )
-  const isCustom = !ALL_KNOWN_VALUES.includes(form.copilotModel ?? '')
-  const supportsReasoning = REASONING_MODELS.has(form.copilotModel ?? '')
-
   useEffect(() => {
     loadSettings().then(() => {
       setForm(settings)
-      setCustomModel(!ALL_KNOWN_VALUES.includes(settings.copilotModel ?? '') ? (settings.copilotModel ?? '') : '')
     })
   }, [])
 
@@ -28,134 +37,122 @@ export default function SettingsView({ onClose }: { onClose: () => void }): JSX.
     try {
       await saveSettings(form)
       setSaved(true)
-      setTimeout(() => setSaved(false), 2000)
+      setTimeout(() => setSaved(false), 2500)
     } catch (err) {
       setSaveError(String(err).replace(/^Error:\s*/, ''))
     }
   }
 
-  const field = (label: string, key: keyof AppSettings, type = 'text'): JSX.Element => (
-    <label className="flex flex-col gap-1 text-sm">
-      <span style={{ color: 'var(--text-muted)' }}>{label}</span>
-      <input
-        type={type}
-        className="input-bar text-sm py-2"
-        value={String(form[key] ?? '')}
-        onChange={e =>
-          setForm(f => ({ ...f, [key]: type === 'number' ? Number(e.target.value) : e.target.value }))
-        }
-      />
-    </label>
-  )
+  const isDirty =
+    form.chromaHost !== settings.chromaHost ||
+    form.chromaPort !== settings.chromaPort
 
   return (
     <div className="flex flex-col h-full" style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
-      {/* Header */}
-      <div className="flex items-center justify-between px-5 py-3 border-b" style={{ borderColor: 'var(--border)' }}>
-        <h2 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>Settings</h2>
-        <button className="btn-ghost" onClick={onClose}>✕ Close</button>
+
+      {/* ── Header ─────────────────────────────────────────────────────── */}
+      <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: 'var(--border)' }}>
+        <div>
+          <h2 className="text-[15px] font-semibold tracking-tight" style={{ color: 'var(--text-primary)' }}>Settings</h2>
+        </div>
+        <button
+          onClick={onClose}
+          className="flex items-center justify-center w-7 h-7 rounded-md transition-colors"
+          style={{ color: 'var(--text-muted)' }}
+          onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')}
+          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+          title="Close"
+        >
+          <IconClose />
+        </button>
       </div>
 
-      {/* Form */}
-      <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-4">
-        <section>
-          <h3 className="text-xs uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>GitHub Copilot</h3>
-          <div className="flex flex-col gap-3">
+      {/* ── Body ───────────────────────────────────────────────────────── */}
+      <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
 
-            {/* ── Model selector ── */}
-            <label className="flex flex-col gap-1 text-sm">
-              <span style={{ color: 'var(--text-muted)' }}>Model</span>
-              <select
-                className="input-bar text-sm py-2"
-                value={isCustom ? CUSTOM_SENTINEL : (form.copilotModel ?? '')}
-                onChange={e => {
-                  const v = e.target.value
-                  if (v === CUSTOM_SENTINEL) {
-                    setCustomModel('')
-                    setForm(f => ({ ...f, copilotModel: '' }))
-                  } else {
-                    setCustomModel('')
-                    setForm(f => ({ ...f, copilotModel: v }))
-                  }
-                }}
-              >
-                {MODEL_GROUPS.map(g => (
-                  <optgroup key={g.group} label={g.group}>
-                    {g.models.map(m => (
-                      <option key={m.value} value={m.value}>{m.label}</option>
-                    ))}
-                  </optgroup>
-                ))}
-                <option value={CUSTOM_SENTINEL}>Custom…</option>
-              </select>
-              {isCustom && (
-                <input
-                  type="text"
-                  className="input-bar text-sm py-2 mt-1"
-                  placeholder="Enter custom model name"
-                  value={customModel}
-                  onChange={e => {
-                    setCustomModel(e.target.value)
-                    setForm(f => ({ ...f, copilotModel: e.target.value }))
-                  }}
-                />
-              )}
-            </label>
-
-            {/* ── Reasoning Effort (only for models that support it) ── */}
-            {supportsReasoning && (
-              <label className="flex flex-col gap-1 text-sm">
-                <span style={{ color: 'var(--text-muted)' }}>Reasoning Effort</span>
-                <select
-                  className="input-bar text-sm py-2"
-                  value={form.reasoningEffort ?? ''}
-                  onChange={e => setForm(f => ({
-                    ...f,
-                    reasoningEffort: (e.target.value || null) as AppSettings['reasoningEffort'],
-                  }))}
-                >
-                  <option value="">Default</option>
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                  <option value="xhigh">Extra High</option>
-                </select>
-              </label>
-            )}
+        {/* ChromaDB Card */}
+        <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}>
+          {/* Card header */}
+          <div className="flex items-center gap-2.5 px-4 py-3 border-b" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+            <span style={{ color: 'var(--accent)' }}><IconDatabase /></span>
+            <div>
+              <p className="text-[13px] font-medium" style={{ color: 'var(--text-primary)' }}>Vector Database</p>
+              <p className="text-[11px]" style={{ color: 'var(--text-faint)' }}>ChromaDB connection settings</p>
+            </div>
           </div>
-        </section>
 
-        <section>
-          <h3 className="text-xs uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>ChromaDB</h3>
-          <div className="flex flex-col gap-3">
-            {field('Host', 'chromaHost')}
-            {field('Port', 'chromaPort', 'number')}
+          {/* Rows */}
+          <div className="divide-y" style={{ borderColor: 'var(--border)' }}>
+            {/* Host row */}
+            <div className="flex items-center justify-between gap-6 px-4 py-3.5">
+              <div className="min-w-0">
+                <p className="text-[13px] font-medium" style={{ color: 'var(--text-primary)' }}>Host</p>
+                <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-faint)' }}>Hostname or IP address of your ChromaDB instance</p>
+              </div>
+              <input
+                type="text"
+                className="input-bar text-sm py-1.5 w-48 shrink-0"
+                value={form.chromaHost ?? ''}
+                onChange={e => setForm(f => ({ ...f, chromaHost: e.target.value }))}
+                placeholder="localhost"
+              />
+            </div>
+
+            {/* Port row */}
+            <div className="flex items-center justify-between gap-6 px-4 py-3.5">
+              <div className="min-w-0">
+                <p className="text-[13px] font-medium" style={{ color: 'var(--text-primary)' }}>Port</p>
+                <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-faint)' }}>TCP port ChromaDB is listening on</p>
+              </div>
+              <input
+                type="number"
+                className="input-bar text-sm py-1.5 w-28 shrink-0"
+                value={form.chromaPort ?? ''}
+                onChange={e => setForm(f => ({ ...f, chromaPort: Number(e.target.value) }))}
+                placeholder="8000"
+              />
+            </div>
           </div>
-        </section>
+        </div>
 
-        <section>
-          <h3 className="text-xs uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>Appearance</h3>
-          <label className="flex flex-col gap-1 text-sm">
-            <span style={{ color: 'var(--text-muted)' }}>Theme</span>
-            <select
-              className="input-bar text-sm py-2"
-              value={form.theme}
-              onChange={e => setForm(f => ({ ...f, theme: e.target.value as AppSettings['theme'] }))}
-            >
-              <option value="system">System</option>
-              <option value="dark">Dark</option>
-              <option value="light">Light</option>
-            </select>
-          </label>
-        </section>
       </div>
 
-      {/* Footer */}
-      <div className="px-5 py-3 border-t flex justify-end gap-2" style={{ borderColor: 'var(--border)' }}>
-        {saved && <span className="text-xs self-center" style={{ color: 'var(--success)' }}>✓ Saved!</span>}
-        {saveError && <span className="text-xs self-center text-right" style={{ color: '#f87171', maxWidth: '60%' }}>⚠️ {saveError}</span>}
-        <button className="btn-primary" onClick={handleSave}>Save</button>
+      {/* ── Footer ─────────────────────────────────────────────────────── */}
+      <div
+        className="flex items-center justify-between px-6 py-3 border-t"
+        style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}
+      >
+        <div className="text-xs h-5 flex items-center">
+          {saved && (
+            <span className="flex items-center gap-1.5" style={{ color: 'var(--success)' }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+              Changes saved
+            </span>
+          )}
+          {saveError && (
+            <span className="flex items-center gap-1.5" style={{ color: '#f87171' }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01" /></svg>
+              {saveError}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            className="btn-ghost text-sm px-3 py-1.5"
+            onClick={onClose}
+          >
+            Cancel
+          </button>
+          <button
+            className="btn-primary text-sm px-4 py-1.5 disabled:opacity-40"
+            onClick={handleSave}
+            disabled={!isDirty}
+          >
+            Save changes
+          </button>
+        </div>
       </div>
+
     </div>
   )
 }

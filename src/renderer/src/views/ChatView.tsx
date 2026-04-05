@@ -5,6 +5,7 @@ import ThinkingIndicator from '../components/ThinkingIndicator'
 import InputBar from '../components/InputBar'
 import ReactMarkdown from 'react-markdown'
 import rehypeHighlight from 'rehype-highlight'
+import remarkGfm from 'remark-gfm'
 import type { Message } from '@shared/ipc-types'
 
 const QUICK_PROMPTS: Record<string, string> = {
@@ -36,51 +37,56 @@ export default function ChatView(): JSX.Element {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Messages area */}
-      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-2">
-        {messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full text-center gap-4" style={{ color: 'var(--text-muted)' }}>
-            <span className="text-6xl">🤖</span>
-            <p className="text-lg font-semibold" style={{ color: 'var(--text-muted)' }}>Hello, I'm Mimi</p>
-            <p className="text-sm max-w-sm">
-              Your AI agent for requirements analysis, test generation and more.
-              Ask me anything!
-            </p>
-            <div className="flex flex-col items-center gap-2 mt-2">
-              <div className="flex gap-2">
-                {['Analyze ticket', 'Summary ticket', 'Review commit'].map(p => (
-                  <QuickPrompt key={p} text={p} prompt={QUICK_PROMPTS[p]} />
-                ))}
-              </div>
-              <div className="flex gap-2">
-                {['Make weekly report', 'Generate test case'].map(p => (
-                  <QuickPrompt key={p} text={p} prompt={QUICK_PROMPTS[p]} />
-                ))}
+      {/* Messages area — scrollable full-width, content centred */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-5xl mx-auto px-4 pt-6 pb-2">
+          {messages.length === 0 && (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center gap-4" style={{ color: 'var(--text-muted)' }}>
+              <span className="text-6xl">🤖</span>
+              <p className="text-lg font-semibold" style={{ color: 'var(--text-muted)' }}>Hello, I'm Mimi</p>
+              <p className="text-sm max-w-sm">
+                Your AI agent for requirements analysis, test generation and more.
+                Ask me anything!
+              </p>
+              <div className="flex flex-col items-center gap-2 mt-2">
+                <div className="flex gap-2">
+                  {['Analyze ticket', 'Summary ticket', 'Review commit'].map(p => (
+                    <QuickPrompt key={p} text={p} prompt={QUICK_PROMPTS[p]} />
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  {['Make weekly report', 'Generate test case'].map(p => (
+                    <QuickPrompt key={p} text={p} prompt={QUICK_PROMPTS[p]} />
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {messages.map(msg => (
-          <MessageBubble key={msg.id} message={msg} />
-        ))}
+          {messages.map(msg => (
+            <MessageBubble key={msg.id} message={msg} />
+          ))}
 
-        {/* Live streaming message */}
-        {streamingMsg && (
-          <div className="flex justify-start mb-3">
-            <span className="text-lg mr-2 mt-1 shrink-0">🤖</span>
-            <div className="bubble-assistant prose-mimi">
-              <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
-                {streamingMsg.content}
-              </ReactMarkdown>
+          {/* Live streaming message */}
+          {streamingMsg && (
+            <div className="flex justify-start mb-6 gap-3">
+              <div className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-sm mt-0.5"
+                style={{ background: 'var(--bg-tertiary)', color: 'var(--accent)' }}>
+                ✦
+              </div>
+              <div className="flex-1 min-w-0 prose-mimi">
+                <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
+                  {streamingMsg.content}
+                </ReactMarkdown>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Thinking indicator — shown before first token */}
-        {isThinking && <ThinkingIndicator />}
+          {/* Thinking indicator — shown before first token */}
+          {isThinking && <ThinkingIndicator />}
 
-        <div ref={bottomRef} />
+          <div ref={bottomRef} />
+        </div>
       </div>
 
       {/* Input */}

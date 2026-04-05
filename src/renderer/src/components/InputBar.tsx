@@ -58,8 +58,8 @@ export default function InputBar(): JSX.Element {
   const currentLabel = modelLabel(settings.copilotModel ?? '')
 
   return (
-    <div className="px-4 pt-2 pb-2 border-t bg-[var(--bg-secondary)]" style={{ borderColor: 'var(--border)' }}>
-      <div className="max-w-3xl mx-auto">
+    <div className="px-4 pt-2 pb-3 border-t" style={{ borderColor: 'var(--border)', background: 'var(--bg-primary)' }}>
+      <div className="max-w-5xl mx-auto">
         {/* Unified input box — textarea + toolbar inside one container */}
         <div className="input-box">
           <textarea
