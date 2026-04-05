@@ -12,11 +12,11 @@ files:
 extraResources:
   - from: data/requirements
     to: requirements
-  # Bundle the Copilot CLI binary for packaged builds.
-  - from: node_modules/@github/copilot-win32-x64/copilot.exe
-    to: copilot-cli/copilot.exe
 
 win:
+  extraResources:
+    - from: node_modules/@github/copilot-win32-x64/copilot.exe
+      to: copilot-cli/copilot.exe
   target:
     - target: nsis
       arch: [x64]
@@ -33,6 +33,9 @@ nsis:
   shortcutName: AI Agent
 
 mac:
+  extraResources:
+    - from: node_modules/@github/copilot-darwin-arm64/copilot
+      to: copilot-cli/copilot
   target:
     - target: dmg
       arch: [x64, arm64]
