@@ -30,7 +30,7 @@ import log from 'electron-log'
 import type { ChatChunk, ChatRequest, AppSettings } from '../../shared/ipc-types'
 import type { CopilotClientService } from './CopilotClientService'
 import type { ToolRegistry } from '../tools/ToolRegistry'
-import { BASE_SYSTEM_PROMPT, SEMANTIC_GATE_ADDENDUM } from './prompts'
+import { BASE_SYSTEM_PROMPT, SEMANTIC_GATE_ADDENDUM, buildSkillsSection } from './prompts'
 
 // Built-in CLI shell/file tools that must be excluded to prevent the agent from
 // entering infinite execution loops when it tries to run shell commands.
@@ -79,10 +79,19 @@ export class CopilotAgentService {
       .map((t: any) => t.name as string)
       .sort()
       .join(',')
+    // Include enabled skill keys + custom instructions in fingerprint so that
+    // changing skills forces fresh sessions with the updated system prompt.
+    const skillsFingerprint = Object.entries(this.settings.skills ?? {})
+      .filter(([, cfg]) => cfg.enabled)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([k, cfg]) => `${k}:${cfg.customInstruction ?? ''}`)
+      .join('|')
     const fingerprint = createHash('sha1')
       .update(BASE_SYSTEM_PROMPT)
       .update('|')
       .update(toolNames)
+      .update('|')
+      .update(skillsFingerprint)
       .digest('hex')
       .slice(0, 12)
 
@@ -244,7 +253,11 @@ export class CopilotAgentService {
         tools,
         excludedTools: EXCLUDED_BUILTIN_TOOLS,
         configDir: join(app.getPath('userData'), 'sdk-sessions'),
-        systemMessage: { content: BASE_SYSTEM_PROMPT + SEMANTIC_GATE_ADDENDUM },
+        systemMessage: {
+          content: BASE_SYSTEM_PROMPT
+            + buildSkillsSection(this.settings.skills ?? {})
+            + SEMANTIC_GATE_ADDENDUM,
+        },
         streaming:    true,
         model:        this.settings.copilotModel || 'gpt-4o',
         ...(this.settings.reasoningEffort ? { reasoningEffort: this.settings.reasoningEffort } : {}),
@@ -273,7 +286,9 @@ export class CopilotAgentService {
       tools,
       excludedTools: EXCLUDED_BUILTIN_TOOLS,
       systemMessage: {
-        content: BASE_SYSTEM_PROMPT + SEMANTIC_GATE_ADDENDUM,
+        content: BASE_SYSTEM_PROMPT
+          + buildSkillsSection(this.settings.skills ?? {})
+          + SEMANTIC_GATE_ADDENDUM,
       },
       onPermissionRequest: approveAll,
       infiniteSessions: { enabled: true },

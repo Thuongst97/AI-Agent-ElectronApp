@@ -2,10 +2,11 @@ import { useRef, useState, useEffect, KeyboardEvent } from 'react'
 import { useChatStore } from '../store/chatStore'
 import { useSettingsStore } from '../store/settingsStore'
 import { MODEL_GROUPS, modelLabel } from '../constants/models'
+import { TOOL_GROUPS, toolSelectionLabel } from '../constants/tools'
 
 export default function InputBar(): JSX.Element {
   const [text, setText] = useState('')
-  const { sendMessage, cancelMessage, isLoading } = useChatStore()
+  const { sendMessage, cancelMessage, isLoading, selectedTools, setSelectedTools } = useChatStore()
   const { settings, saveSettings } = useSettingsStore()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -13,7 +14,11 @@ export default function InputBar(): JSX.Element {
   const [pickerOpen, setPickerOpen] = useState(false)
   const pickerRef = useRef<HTMLDivElement>(null)
 
-  // Close picker on outside click
+  // ── Tool picker state ─────────────────────────────────────────────────────
+  const [toolPickerOpen, setToolPickerOpen] = useState(false)
+  const toolPickerRef = useRef<HTMLDivElement>(null)
+
+  // Close pickers on outside click
   useEffect(() => {
     if (!pickerOpen) return
     const handler = (e: MouseEvent): void => {
@@ -24,6 +29,25 @@ export default function InputBar(): JSX.Element {
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [pickerOpen])
+
+  useEffect(() => {
+    if (!toolPickerOpen) return
+    const handler = (e: MouseEvent): void => {
+      if (toolPickerRef.current && !toolPickerRef.current.contains(e.target as Node)) {
+        setToolPickerOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [toolPickerOpen])
+
+  const toggleTool = (value: string): void => {
+    setSelectedTools(
+      selectedTools.includes(value)
+        ? selectedTools.filter(t => t !== value)
+        : [...selectedTools, value],
+    )
+  }
 
   const handleModelSelect = async (value: string): Promise<void> => {
     setPickerOpen(false)
@@ -73,70 +97,186 @@ export default function InputBar(): JSX.Element {
             disabled={isLoading}
           />
 
-          {/* Toolbar row — model picker + send button */}
+          {/* Toolbar row — model picker + tool picker + send button */}
           <div className="flex items-center gap-1 px-2 pb-1.5">
-            <div ref={pickerRef} className="relative">
-          {/* Pill button */}
-          <button
-            onClick={() => setPickerOpen(p => !p)}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-colors"
-            style={{
-              color: 'var(--text-muted)',
-              background: pickerOpen ? 'var(--surface-hover)' : 'transparent',
-            }}
-            onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')}
-            onMouseLeave={e => (e.currentTarget.style.background = pickerOpen ? 'var(--surface-hover)' : 'transparent')}
-            title="Switch model"
-          >
-            <span style={{ fontSize: '11px', opacity: 0.6 }}>⬡</span>
-            <span>{currentLabel}</span>
-            <svg
-              width="10" height="10" viewBox="0 0 10 10" fill="none"
-              style={{ transform: pickerOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 120ms' }}
-            >
-              <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
 
-          {/* Dropdown — opens upward */}
-          {pickerOpen && (
-            <div
-              className="absolute bottom-full left-0 mb-1 w-56 rounded-lg shadow-xl border overflow-hidden z-50"
-              style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)' }}
-            >
-              {MODEL_GROUPS.map(g => (
-                <div key={g.group}>
-                  <div
-                    className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider"
-                    style={{ color: 'var(--text-faint)' }}
-                  >
-                    {g.group}
-                  </div>
-                  {g.models.map(m => {
-                    const active = m.value === settings.copilotModel
-                    return (
-                      <button
-                        key={m.value}
-                        onClick={() => handleModelSelect(m.value)}
-                        className="w-full text-left px-3 py-1.5 text-sm flex items-center justify-between transition-colors"
-                        style={{
-                          color: active ? 'var(--accent)' : 'var(--text-primary)',
-                          background: active ? 'var(--tool-bg)' : 'transparent',
-                          fontWeight: active ? 600 : 400,
-                        }}
-                        onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'var(--surface-hover)' }}
-                        onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
+            {/* ── Model picker ── */}
+            <div ref={pickerRef} className="relative">
+              <button
+                onClick={() => setPickerOpen(p => !p)}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-colors"
+                style={{
+                  color: 'var(--text-muted)',
+                  background: pickerOpen ? 'var(--surface-hover)' : 'transparent',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')}
+                onMouseLeave={e => (e.currentTarget.style.background = pickerOpen ? 'var(--surface-hover)' : 'transparent')}
+                title="Switch model"
+              >
+                <span style={{ fontSize: '11px', opacity: 0.6 }}>⬡</span>
+                <span>{currentLabel}</span>
+                <svg
+                  width="10" height="10" viewBox="0 0 10 10" fill="none"
+                  style={{ transform: pickerOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 120ms' }}
+                >
+                  <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+
+              {pickerOpen && (
+                <div
+                  className="absolute bottom-full left-0 mb-1 w-56 rounded-lg shadow-xl border overflow-hidden z-50"
+                  style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)' }}
+                >
+                  {MODEL_GROUPS.map(g => (
+                    <div key={g.group}>
+                      <div
+                        className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider"
+                        style={{ color: 'var(--text-faint)' }}
                       >
-                        <span>{m.label}</span>
-                        {active && <span style={{ fontSize: '10px' }}>✓</span>}
-                      </button>
-                    )
-                  })}
+                        {g.group}
+                      </div>
+                      {g.models.map(m => {
+                        const active = m.value === settings.copilotModel
+                        return (
+                          <button
+                            key={m.value}
+                            onClick={() => handleModelSelect(m.value)}
+                            className="w-full text-left px-3 py-1.5 text-sm flex items-center justify-between transition-colors"
+                            style={{
+                              color: active ? 'var(--accent)' : 'var(--text-primary)',
+                              background: active ? 'var(--tool-bg)' : 'transparent',
+                              fontWeight: active ? 600 : 400,
+                            }}
+                            onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'var(--surface-hover)' }}
+                            onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
+                          >
+                            <span>{m.label}</span>
+                            {active && <span style={{ fontSize: '10px' }}>✓</span>}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
-          )}
-        </div>
+
+            {/* ── Divider ── */}
+            <span style={{ width: 1, height: 14, background: 'var(--border)', display: 'inline-block', opacity: 0.6 }} />
+
+            {/* ── Tool picker ── */}
+            <div ref={toolPickerRef} className="relative">
+              <button
+                onClick={() => setToolPickerOpen(p => !p)}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-colors"
+                style={{
+                  color: selectedTools.length > 0 ? 'var(--accent)' : 'var(--text-muted)',
+                  background: toolPickerOpen ? 'var(--surface-hover)' : 'transparent',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')}
+                onMouseLeave={e => (e.currentTarget.style.background = toolPickerOpen ? 'var(--surface-hover)' : 'transparent')}
+                title="Select tools (agent will prioritise selected tools)"
+              >
+                {/* Wrench icon */}
+                <svg width="11" height="11" viewBox="0 0 14 14" fill="none" style={{ opacity: selectedTools.length > 0 ? 1 : 0.6 }}>
+                  <path d="M9.5 2a3 3 0 0 1 2.83 4H11.5l-2-2 .857-.857A3 3 0 0 0 6.17 5.89L2.5 9.56A1.5 1.5 0 0 0 4.56 11.5l3.67-3.67A3 3 0 0 1 9.5 2Z"
+                    stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span>{toolSelectionLabel(selectedTools)}</span>
+                {selectedTools.length > 0 && (
+                  <span
+                    onClick={e => { e.stopPropagation(); setSelectedTools([]) }}
+                    title="Clear selection"
+                    style={{ opacity: 0.5, cursor: 'pointer', fontSize: '10px', lineHeight: 1 }}
+                  >✕</span>
+                )}
+                <svg
+                  width="10" height="10" viewBox="0 0 10 10" fill="none"
+                  style={{ transform: toolPickerOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 120ms' }}
+                >
+                  <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+
+              {toolPickerOpen && (
+                <div
+                  className="absolute bottom-full left-0 mb-1 w-64 rounded-lg shadow-xl border overflow-hidden z-50"
+                  style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)' }}
+                >
+                  {/* Auto option */}
+                  <div className="px-3 pt-2 pb-1">
+                    <button
+                      onClick={() => setSelectedTools([])}
+                      className="w-full text-left px-2 py-1.5 text-sm flex items-center justify-between rounded-md transition-colors"
+                      style={{
+                        color:      selectedTools.length === 0 ? 'var(--accent)' : 'var(--text-primary)',
+                        background: selectedTools.length === 0 ? 'var(--tool-bg)' : 'transparent',
+                        fontWeight: selectedTools.length === 0 ? 600 : 400,
+                      }}
+                      onMouseEnter={e => { if (selectedTools.length > 0) e.currentTarget.style.background = 'var(--surface-hover)' }}
+                      onMouseLeave={e => { if (selectedTools.length > 0) e.currentTarget.style.background = 'transparent' }}
+                    >
+                      <span>Auto (let agent decide)</span>
+                      {selectedTools.length === 0 && <span style={{ fontSize: '10px' }}>✓</span>}
+                    </button>
+                  </div>
+
+                  <div style={{ height: 1, background: 'var(--border)', margin: '0 12px' }} />
+
+                  {TOOL_GROUPS.map(g => (
+                    <div key={g.group}>
+                      <div
+                        className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1.5"
+                        style={{ color: 'var(--text-faint)' }}
+                      >
+                        <span>{g.icon}</span>
+                        <span>{g.group}</span>
+                      </div>
+                      {g.tools.map(t => {
+                        const active = selectedTools.includes(t.value)
+                        return (
+                          <button
+                            key={t.value}
+                            onClick={() => toggleTool(t.value)}
+                            className="w-full text-left px-3 py-1.5 text-sm flex items-center gap-2.5 transition-colors"
+                            style={{
+                              color:      active ? 'var(--accent)' : 'var(--text-primary)',
+                              background: active ? 'var(--tool-bg)' : 'transparent',
+                              fontWeight: active ? 600 : 400,
+                            }}
+                            onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'var(--surface-hover)' }}
+                            onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
+                            title={t.description}
+                          >
+                            {/* Checkbox */}
+                            <span
+                              style={{
+                                width: 13, height: 13, flexShrink: 0,
+                                borderRadius: 3,
+                                border: `1.5px solid ${active ? 'var(--accent)' : 'var(--border)'}`,
+                                background: active ? 'var(--accent)' : 'transparent',
+                                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                              }}
+                            >
+                              {active && (
+                                <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+                                  <path d="M1.5 4L3 5.5L6.5 2" stroke="var(--bg-primary)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                              )}
+                            </span>
+                            <span>{t.label}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  ))}
+                  <div className="px-3 py-2 text-[10px]" style={{ color: 'var(--text-faint)', borderTop: '1px solid var(--border)' }}>
+                    Agent will prioritise selected tools; other tools remain available.
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Send / Stop button — right end of toolbar */}
             <div className="ml-auto">
@@ -147,7 +287,6 @@ export default function InputBar(): JSX.Element {
                   className="flex items-center justify-center h-8 w-8 rounded-lg transition-colors"
                   style={{ background: 'var(--text-primary)', color: 'var(--bg-primary)' }}
                 >
-                  {/* Square stop icon */}
                   <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
                     <rect x="1" y="1" width="8" height="8" rx="1.5"/>
                   </svg>

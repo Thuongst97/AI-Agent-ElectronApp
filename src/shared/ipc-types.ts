@@ -41,6 +41,8 @@ export const TOKEN_MASKED = '__masked__'
 export interface ChatRequest {
   message:        string
   conversationId: string
+  /** Tool names the user has hinted — agent will prefer these but is not restricted. */
+  toolHints?:     string[]
 }
 
 export type ChatChunkType =
@@ -79,6 +81,13 @@ export interface ConversationMeta {
 
 // ── Settings ──────────────────────────────────────────────────────────────────
 
+/** Per-skill configuration stored in AppSettings. */
+export interface SkillConfig {
+  enabled:           boolean
+  /** Custom instruction text; if empty, the built-in default is used. */
+  customInstruction: string
+}
+
 export interface AppSettings {
   githubToken:     string
   copilotModel:    string
@@ -91,6 +100,8 @@ export interface AppSettings {
   jiraDomain:      string   // e.g. "mycompany.atlassian.net"
   jiraEmail:       string
   jiraToken:       string
+  // Agent skills
+  skills:          Record<string, SkillConfig>
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -104,6 +115,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   jiraDomain:      '',
   jiraEmail:       '',
   jiraToken:       '',
+  skills:          {},
 }
 
 // ── Data ingest ───────────────────────────────────────────────────────────────

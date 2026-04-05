@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { Message, ConversationMeta, ChatChunk } from '@shared/ipc-types'
 import { nanoid } from 'nanoid'
+import { buildToolHintPrefix } from '../constants/tools'
 
 // ── Token batching — accumulate tokens and flush once per animation frame ────
 // Calling set() on every token triggers a full React re-render; batching
@@ -33,6 +34,10 @@ interface ChatState {
   // Streaming buffer
   streamingContent: string
 
+  // Tool selection (user hint — 'auto' when empty)
+  selectedTools: string[]
+  setSelectedTools: (tools: string[]) => void
+
   // Actions
   newConversation: ()                                   => string
   setActiveConversation: (id: string)                   => Promise<void>
@@ -50,6 +55,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
   isLoading:            false,
   isThinking:           false,
   streamingContent:     '',
+  selectedTools:        [],
+
+  setSelectedTools: (tools) => set({ selectedTools: tools }),
 
   // ── Create a new blank conversation ────────────────────────────────────────
   newConversation: () => {
@@ -111,13 +119,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
     _tokenBuffer = ''
     _flushFn     = null
 
-    const { activeConversationId, newConversation } = get()
+    const { activeConversationId, newConversation, selectedTools } = get()
     const convId = activeConversationId ?? newConversation()
 
     const userMsg: Message = {
       id:        nanoid(),
       role:      'user',
-      content:   text,
+      content:   text,   // show original text in UI (without the hint prefix)
       createdAt: new Date().toISOString(),
     }
 
@@ -133,8 +141,17 @@ export const useChatStore = create<ChatState>((set, get) => ({
       get().appendChunk(chunk)
     })
 
+    // Prepend tool-hint prefix so the agent renders it in the system context,
+    // but also pass the raw list for IPC so the main process can log/act on it.
+    const hintPrefix = buildToolHintPrefix(selectedTools)
+    const messageWithHint = hintPrefix + text
+
     try {
-      await window.electronAPI.sendMessage({ message: text, conversationId: convId })
+      await window.electronAPI.sendMessage({
+        message:       messageWithHint,
+        conversationId: convId,
+        toolHints:     selectedTools.length > 0 ? selectedTools : undefined,
+      })
     } finally {
       // Keep the listener alive briefly so any in-flight chunks (especially
       // 'final') that are still in the IPC queue can be processed before we
