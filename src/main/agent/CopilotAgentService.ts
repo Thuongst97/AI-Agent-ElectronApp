@@ -87,7 +87,7 @@ export class CopilotAgentService {
       .map(([k, cfg]) => `${k}:${cfg.customInstruction ?? ''}`)
       .join('|')
     const fingerprint = createHash('sha1')
-      .update(BASE_SYSTEM_PROMPT)
+      .update(this.settings.systemPrompt?.trim() || BASE_SYSTEM_PROMPT)
       .update('|')
       .update(toolNames)
       .update('|')
@@ -254,7 +254,7 @@ export class CopilotAgentService {
         excludedTools: EXCLUDED_BUILTIN_TOOLS,
         configDir: join(app.getPath('userData'), 'sdk-sessions'),
         systemMessage: {
-          content: BASE_SYSTEM_PROMPT
+          content: (this.settings.systemPrompt?.trim() || BASE_SYSTEM_PROMPT)
             + buildSkillsSection(this.settings.skills ?? {})
             + SEMANTIC_GATE_ADDENDUM,
         },
@@ -286,7 +286,7 @@ export class CopilotAgentService {
       tools,
       excludedTools: EXCLUDED_BUILTIN_TOOLS,
       systemMessage: {
-        content: BASE_SYSTEM_PROMPT
+        content: (this.settings.systemPrompt?.trim() || BASE_SYSTEM_PROMPT)
           + buildSkillsSection(this.settings.skills ?? {})
           + SEMANTIC_GATE_ADDENDUM,
       },

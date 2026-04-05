@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useSettingsStore } from '../store/settingsStore'
 import type { AppSettings, SkillConfig } from '@shared/ipc-types'
 import { SKILL_DEFINITIONS } from '../constants/skills'
+import { DEFAULT_SYSTEM_PROMPT } from '@shared/defaultSystemPrompt'
 
 function IconDatabase(): JSX.Element {
   return (
@@ -169,11 +170,116 @@ function SkillEditModal({ skillKey, label, icon, defaultInstruction, current, on
   )
 }
 
+function IconPrompt(): JSX.Element {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
+  )
+}
+
+function SystemPromptModal({
+  value,
+  onApply,
+  onClose,
+}: {
+  value: string
+  onApply: (text: string) => void
+  onClose: () => void
+}): JSX.Element {
+  const [draft, setDraft] = useState<string>(value || DEFAULT_SYSTEM_PROMPT)
+  const isCustom = draft.trim() !== '' && draft.trim() !== DEFAULT_SYSTEM_PROMPT
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ background: 'rgba(0,0,0,0.55)' }}
+      onMouseDown={e => { if (e.target === e.currentTarget) onClose() }}
+    >
+      <div
+        className="flex flex-col rounded-xl border shadow-2xl"
+        style={{
+          width: 680, maxWidth: 'calc(100vw - 48px)',
+          maxHeight: 'calc(100vh - 80px)',
+          background: 'var(--bg-primary)',
+          borderColor: 'var(--border)',
+        }}
+      >
+        {/* Header */}
+        <div
+          className="flex items-center justify-between px-5 py-3.5 border-b"
+          style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
+        >
+          <div className="flex items-center gap-2.5">
+            <span style={{ color: 'var(--accent)' }}><IconPrompt /></span>
+            <div>
+              <p className="text-[13px] font-semibold" style={{ color: 'var(--text-primary)' }}>System Prompt</p>
+              <p className="text-[11px]" style={{ color: 'var(--text-faint)' }}>Injected at the start of every agent session · leave blank to use the built-in default</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="flex items-center justify-center w-6 h-6 rounded-md"
+            style={{ color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
+          </button>
+        </div>
+
+        {/* Textarea */}
+        <div className="flex-1 overflow-y-auto px-5 py-4">
+          <textarea
+            rows={18}
+            className="input-bar text-[14px] w-full resize-none"
+            style={{ fontFamily: "'Inter', system-ui, sans-serif", lineHeight: 1.65 }}
+            value={draft}
+            onChange={e => setDraft(e.target.value)}
+            spellCheck={false}
+            placeholder={`Enter a custom system prompt…\n\nLeave empty to use the built-in default.\n\nExample:\nYou are Mimi, an expert AI assistant…`}
+            autoFocus
+          />
+          {isCustom && (
+            <button
+              className="mt-2 text-[11px] underline"
+              style={{ color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+              onClick={() => setDraft(DEFAULT_SYSTEM_PROMPT)}
+            >
+              Reset to default
+            </button>
+          )}
+          {!isCustom && (
+            <p className="mt-2 text-[11px]" style={{ color: 'var(--text-faint)' }}>
+              Using built-in default prompt.
+            </p>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div
+          className="flex items-center justify-end gap-2 px-5 py-3 border-t"
+          style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}
+        >
+          <button className="btn-ghost text-sm px-3 py-1.5" onClick={onClose}>Cancel</button>
+          <button
+            className="btn-primary text-sm px-4 py-1.5"
+            onClick={() => { onApply(draft.trim() === DEFAULT_SYSTEM_PROMPT ? '' : draft.trim()); onClose() }}
+          >
+            Apply
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function SettingsView({ onClose }: { onClose: () => void }): JSX.Element {
   const { settings, loadSettings, saveSettings } = useSettingsStore()
   const [form, setForm] = useState<AppSettings>(settings)
   const [saved, setSaved] = useState(false)
   const [saveError, setSaveError] = useState('')
+  const [showPromptModal, setShowPromptModal] = useState(false)
 
   useEffect(() => {
     loadSettings().then(() => {
@@ -198,7 +304,8 @@ export default function SettingsView({ onClose }: { onClose: () => void }): JSX.
     form.jiraDomain   !== settings.jiraDomain  ||
     form.jiraEmail    !== settings.jiraEmail   ||
     form.jiraToken    !== settings.jiraToken   ||
-    JSON.stringify(form.skills ?? {}) !== JSON.stringify(settings.skills ?? {})
+    JSON.stringify(form.skills ?? {}) !== JSON.stringify(settings.skills ?? {}) ||
+    (form.systemPrompt ?? '') !== (settings.systemPrompt ?? '')
 
   const toggleSkill = (key: string, current: SkillConfig): void => {
     setForm(f => ({
@@ -224,7 +331,7 @@ export default function SettingsView({ onClose }: { onClose: () => void }): JSX.
     : null
 
   return (
-    <div className="flex flex-col h-full" style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
+    <div className="flex flex-col h-full" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: 'var(--border)' }}>
@@ -247,7 +354,7 @@ export default function SettingsView({ onClose }: { onClose: () => void }): JSX.
       <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
 
         {/* ChromaDB Card */}
-        <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}>
+        <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border)', background: 'var(--bg-primary)' }}>
           {/* Card header */}
           <div className="flex items-center gap-2.5 px-4 py-3 border-b" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
             <span style={{ color: 'var(--accent)' }}><IconDatabase /></span>
@@ -292,7 +399,7 @@ export default function SettingsView({ onClose }: { onClose: () => void }): JSX.
         </div>
 
         {/* Jira Card */}
-        <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}>
+        <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border)', background: 'var(--bg-primary)' }}>
           {/* Card header */}
           <div className="flex items-center gap-2.5 px-4 py-3 border-b" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
             <span style={{ color: 'var(--accent)' }}><IconJira /></span>
@@ -351,8 +458,55 @@ export default function SettingsView({ onClose }: { onClose: () => void }): JSX.
           </div>
         </div>
 
+        {/* System Prompt Card */}
+        <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border)', background: 'var(--bg-primary)' }}>
+          <div className="flex items-center gap-2.5 px-4 py-3 border-b" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+            <span style={{ color: 'var(--accent)' }}><IconPrompt /></span>
+            <div>
+              <p className="text-[13px] font-medium" style={{ color: 'var(--text-primary)' }}>System Prompt</p>
+              <p className="text-[11px]" style={{ color: 'var(--text-faint)' }}>Base instruction injected at the start of every agent session</p>
+            </div>
+          </div>
+          <div className="flex items-center justify-between gap-6 px-4 py-3.5">
+            <div className="min-w-0 flex-1">
+              <p className="text-[13px] font-medium" style={{ color: 'var(--text-primary)' }}>Base Instruction</p>
+              {form.systemPrompt?.trim() ? (
+                <p className="text-[11px] mt-0.5 truncate" style={{ color: 'var(--text-faint)' }}>
+                  {form.systemPrompt.trim().slice(0, 80)}{form.systemPrompt.trim().length > 80 ? '…' : ''}
+                </p>
+              ) : (
+                <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-faint)' }}>Using built-in default prompt</p>
+              )}
+            </div>
+            <button
+              title="Edit system prompt"
+              onClick={() => setShowPromptModal(true)}
+              className="flex items-center gap-1.5 shrink-0 rounded-md px-2 py-1 text-[11px] border transition-colors"
+              style={{
+                borderColor: form.systemPrompt?.trim() ? 'var(--accent)' : 'var(--border)',
+                color: form.systemPrompt?.trim() ? 'var(--accent)' : 'var(--text-muted)',
+                background: 'none', cursor: 'pointer',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+            >
+              <IconEdit />
+              <span>{form.systemPrompt?.trim() ? 'Custom' : 'Edit'}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* System Prompt Modal */}
+        {showPromptModal && (
+          <SystemPromptModal
+            value={form.systemPrompt ?? ''}
+            onApply={text => setForm(f => ({ ...f, systemPrompt: text }))}
+            onClose={() => setShowPromptModal(false)}
+          />
+        )}
+
         {/* Skills Card */}
-        <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}>
+        <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border)', background: 'var(--bg-primary)' }}>
           {/* Card header */}
           <div className="flex items-center gap-2.5 px-4 py-3 border-b" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
             <span style={{ color: 'var(--accent)' }}><IconSkills /></span>

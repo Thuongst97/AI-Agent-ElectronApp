@@ -102,6 +102,8 @@ export interface AppSettings {
   jiraToken:       string
   // Agent skills
   skills:          Record<string, SkillConfig>
+  /** Custom system prompt; empty string means use the built-in default. */
+  systemPrompt:    string
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -116,6 +118,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   jiraEmail:       '',
   jiraToken:       '',
   skills:          {},
+  systemPrompt:    '',
 }
 
 // ── Data ingest ───────────────────────────────────────────────────────────────
