@@ -14,6 +14,7 @@
 import type { Tool }              from '@github/copilot-sdk'
 import type { JiraService }         from '../services/JiraService'
 import { makeJiraTools }          from './jiraTools'
+import { makeMermaidTools }       from './mermaidTools'
 import log from 'electron-log'
 
 export class ToolRegistry {
@@ -22,6 +23,7 @@ export class ToolRegistry {
   constructor(jira: JiraService) {
     this.tools = [
       ...makeJiraTools(jira),
+      ...makeMermaidTools(),
     ]
     log.info('[ToolRegistry] Created with %d Jira tool(s)', this.tools.length)
   }

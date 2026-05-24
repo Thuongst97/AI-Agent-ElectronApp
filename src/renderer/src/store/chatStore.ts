@@ -28,6 +28,7 @@ interface ChatState {
 
   // Messages for the active conversation
   messages:  Message[]
+  pendingToolMessages: Message[]
   isLoading: boolean
   isThinking: boolean   // LLM is reasoning (before first token)
 
@@ -52,6 +53,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   conversations:        [],
   activeConversationId: null,
   messages:             [],
+  pendingToolMessages:  [],
   isLoading:            false,
   isThinking:           false,
   streamingContent:     '',
@@ -69,6 +71,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     set({
       activeConversationId: id,
       messages:             [],
+      pendingToolMessages:  [],
       streamingContent:     '',
       isLoading:            false,
       isThinking:           false,
@@ -96,7 +99,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
       }
       return {
         ...s,
-        messages:         [...s.messages, partialMsg],
+        messages:         [...s.messages, partialMsg, ...s.pendingToolMessages],
+        pendingToolMessages: [],
         isLoading:        false,
         isThinking:       false,
         streamingContent: '',
@@ -107,7 +111,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   // ── Load an existing conversation from history ──────────────────────────────
   setActiveConversation: async (id: string) => {
     const messages = await window.electronAPI.getHistory(id)
-    set({ activeConversationId: id, messages, streamingContent: '' })
+    set({ activeConversationId: id, messages, pendingToolMessages: [], streamingContent: '' })
   },
 
   // ── Send a user message ─────────────────────────────────────────────────────
@@ -131,6 +135,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     set(s => ({
       messages:         [...s.messages, userMsg],
+      pendingToolMessages: [],
       isLoading:        true,
       isThinking:       true,
       streamingContent: '',
@@ -172,7 +177,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
         }
         return {
           ...s,
-          messages:         [...s.messages, assistantMsg],
+          messages:         [...s.messages, assistantMsg, ...s.pendingToolMessages],
+          pendingToolMessages: [],
           isLoading:        false,
           isThinking:       false,
           streamingContent: '',
@@ -209,7 +215,31 @@ export const useChatStore = create<ChatState>((set, get) => ({
         toolName:  chunk.toolName,
         createdAt: new Date().toISOString(),
       }
-      set(s => ({ messages: [...s.messages, toolMsg], isThinking: true }))
+      set(s => ({ pendingToolMessages: [...s.pendingToolMessages, toolMsg], isThinking: true }))
+    }
+
+    if (chunk.type === 'tool_result') {
+      // Overwrite the matching tool_call message with the actual result so that
+      // renderers (e.g. MermaidDiagram) receive the tool output, not the args.
+      set(s => {
+        const pendingToolMessages = [...s.pendingToolMessages]
+        const idx = [...pendingToolMessages]
+          .reverse()
+          .findIndex(m => m.role === 'tool' && m.toolName === chunk.toolName)
+        if (idx === -1) {
+          const toolMsg: Message = {
+            id:        nanoid(),
+            role:      'tool',
+            content:   chunk.content,
+            toolName:  chunk.toolName,
+            createdAt: new Date().toISOString(),
+          }
+          return { ...s, pendingToolMessages: [...pendingToolMessages, toolMsg] }
+        }
+        const realIdx = pendingToolMessages.length - 1 - idx
+        pendingToolMessages[realIdx] = { ...pendingToolMessages[realIdx], content: chunk.content }
+        return { ...s, pendingToolMessages }
+      })
     }
 
     if (chunk.type === 'final' || chunk.type === 'error') {
@@ -234,7 +264,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
         createdAt: new Date().toISOString(),
       }
       set(s => ({
-        messages:         [...s.messages, assistantMsg],
+        messages:         [...s.messages, assistantMsg, ...s.pendingToolMessages],
+        pendingToolMessages: [],
         isLoading:        false,
         isThinking:       false,
         streamingContent: '',

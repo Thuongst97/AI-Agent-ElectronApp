@@ -4,6 +4,7 @@ import rehypeHighlight from 'rehype-highlight'
 import remarkGfm from 'remark-gfm'
 import { Message } from '@shared/ipc-types'
 import ToolCallBadge from './ToolCallBadge'
+import MermaidDiagram from './MermaidDiagram'
 import type { Components } from 'react-markdown'
 
 interface Props {
@@ -41,10 +42,16 @@ function CopyButton({ text }: { text: string }): JSX.Element {
 export const markdownComponents: Components = {
   code({ className, children, ...props }) {
     const text = String(children).replace(/\n$/, '')
+    const lang = className?.replace('language-', '') ?? ''
+
+    // Render Mermaid diagrams inline
+    if (lang === 'mermaid') {
+      return <MermaidDiagram code={text} />
+    }
+
     // treat as block if a language is tagged OR the content spans multiple lines
     // (covers language-less fences used for ASCII art / plain diagrams)
     const isBlock = !!className?.startsWith('language-') || text.includes('\n')
-    const lang = className?.replace('language-', '') ?? ''
     if (isBlock) {
       return (
         <div className="code-block">
